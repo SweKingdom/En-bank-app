@@ -4,7 +4,7 @@ namespace BlazorApp4.Services
 {
     public class AccountService : IAccountService
     {
-        private readonly IAccountService _accounts;
+        private readonly List<IBankAccount> _accounts = new();
 
 
         public IBankAccount CreateAccount(string name, AccountType accountType, string currency, decimal initialBalance)
