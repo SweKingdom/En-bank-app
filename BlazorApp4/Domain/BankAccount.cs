@@ -8,7 +8,7 @@ namespace BlazorApp4.Domain
 
         public string Name { get; private set; }
 
-        public string Type { get; private set; }
+        public AccountType AccountType { get; private set; }
 
         public string Currency { get; private set; }
 
@@ -16,12 +16,12 @@ namespace BlazorApp4.Domain
 
         public DateTime LastUpdated { get; private set; }
 
-        public BankAccount(string name, string type, string currency, decimal balance)
+        public BankAccount(string name, AccountType accountType, string currency, decimal initialBalance)
         {
             Name = name;
-            Type = type;
+            AccountType = accountType;
             Currency = currency;
-            Balance = balance;
+            Balance = initialBalance;
             LastUpdated = DateTime.Now;
         }
 
