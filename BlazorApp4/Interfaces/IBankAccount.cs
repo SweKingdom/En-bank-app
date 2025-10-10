@@ -11,8 +11,8 @@ public interface IBankAccount
 {
     Guid Id { get; }
     string Name { get; }
-    AccountType AccountType { get; }
-    string Currency {  get; }
+    Domain.AccountType AccountType { get; }
+    Valuta Currency {  get; }
     decimal Balance { get; }
     DateTime LastUpdated { get; }
 
