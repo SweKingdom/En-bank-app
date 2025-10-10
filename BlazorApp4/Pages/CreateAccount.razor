@@ -11,7 +11,7 @@
     </div>
     <div>
         <label>Kontotyp</label>
-        <InputSelect @bind-Value="_model.Type">
+        <InputSelect @bind-Value="_model.AccountType">
             <option value="">Välj kontotyp!</option>
             <option value="@AccountType.Deposit">Baskonto</option>
             <option value="@AccountType.Savings">Sparkonto</option>
@@ -19,7 +19,12 @@
     </div>
     <div>
         <label>Valuta</label>
-        <InputText @bind-Value="_model.Currency" />
+        <InputSelect @bind-Value="_model.Currency">
+            <option value="">Välj valuta!</option>
+            <option value="@Valuta.SEK">SEK</option>
+            <option value="@Valuta.Euro">Euro</option>
+            <option value="@Valuta.USD">USD</option>
+        </InputSelect>
 
     </div>
     <div>
@@ -70,12 +75,13 @@ else
 
             AccountService.CreateAccount(
                 _model.Name,
-                _model.Type,
+                _model.AccountType,
                 _model.Currency,
                 _model.InitialBalance
             );
 
             _accounts = AccountService.GetAccounts().ToList();
+            _model.Clear();
         }
         catch(Exception exception)
         {
@@ -92,16 +98,16 @@ else
     private class CreateAccountModel
     {
         public string Name { get; set; }
-        public AccountType Type { get; set; }
-        public string Currency { get; set; }
+        public AccountType AccountType { get; set; }
+        public Valuta Currency { get; set; }
         public decimal InitialBalance { get; set; }
 
         public void Clear()
         {
             Name = string.Empty;
-            Currency = string.Empty;
+            Currency = default;
             InitialBalance = 0;
-            Type = default;
+            AccountType = default;
         }
     }
 }

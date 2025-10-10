@@ -5,3 +5,10 @@ public enum AccountType
     Savings,
     Deposit
 }
+
+public enum Valuta
+{
+    SEK,
+    Euro,
+    USD
+}
