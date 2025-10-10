@@ -10,13 +10,13 @@ namespace BlazorApp4.Domain
 
         public AccountType AccountType { get; private set; }
 
-        public Valuta Currency { get; private set; }
+        public Currency Currency { get; private set; }
 
         public decimal Balance { get; private set; }
 
         public DateTime LastUpdated { get; private set; }
 
-        public BankAccount(string name, AccountType accountType, Valuta currency, decimal initialBalance)
+        public BankAccount(string name, AccountType accountType, Currency currency, decimal initialBalance)
         {
             Name = name;
             AccountType = accountType;

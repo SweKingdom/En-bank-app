@@ -6,7 +6,7 @@ public enum AccountType
     Deposit
 }
 
-public enum Valuta
+public enum Currency
 {
     SEK,
     Euro,
