@@ -29,19 +29,60 @@
     <button type="submit">Skapa</button>
 </EditForm>
 
+
+
+<!--Lägg till alla konton-->
+
+<h4>Alla konton</h4>
+@if(_accounts.Count == 0)
+{
+    <p>Det finns inga konton ännu, registera ditt första konto!</p>
+}
+else
+{
+    <ul>
+        @foreach(var account in _accounts)
+        {
+            <li>
+                <strong>@account.Name</strong> - @account.AccountType - @account.Balance - @account.Currency
+                <small>(Uppdaterad @account.LastUpdated.ToLocalTime())</small>
+            </li>
+        }
+    </ul>
+}
+
+
+
 @code {
     private CreateAccountModel _model = new();
+    private List<IBankAccount> _accounts = new();
 
-
-
+    protected override void OnInitialized()
+    {
+        _accounts = AccountService.GetAccounts().ToList();
+        base.OnInitialized();
+    }
     private Task CreateAccountAsync()
     {
-        AccountService.CreateAccount(
-            _model.Name,
-            _model.Type,
-            _model.Currency,
-            _model.InitialBalance
-        );
+        try
+        {
+            Console.WriteLine(_model.Name);
+
+            AccountService.CreateAccount(
+                _model.Name,
+                _model.Type,
+                _model.Currency,
+                _model.InitialBalance
+            );
+
+            _accounts = AccountService.GetAccounts().ToList();
+        }
+        catch(Exception exception)
+        {
+            Console.WriteLine(exception);
+            throw;
+        }
+
 
         return Task.CompletedTask;
     }
