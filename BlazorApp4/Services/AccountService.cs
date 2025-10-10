@@ -7,7 +7,7 @@ namespace BlazorApp4.Services
         private readonly List<IBankAccount> _accounts = new();
 
 
-        public IBankAccount CreateAccount(string name, Domain.AccountType accountType, Valuta currency, decimal initialBalance)
+        public IBankAccount CreateAccount(string name, Domain.AccountType accountType, Currency currency, decimal initialBalance)
         {
             var account = new BankAccount(name, accountType, currency, initialBalance);
             _accounts.Add(account);

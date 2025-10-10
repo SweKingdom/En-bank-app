@@ -21,9 +21,9 @@
         <label>Valuta</label>
         <InputSelect @bind-Value="_model.Currency">
             <option value="">Välj valuta!</option>
-            <option value="@Valuta.SEK">SEK</option>
-            <option value="@Valuta.Euro">Euro</option>
-            <option value="@Valuta.USD">USD</option>
+            <option value="@Currency.Euro">Euro</option>
+            <option value="@Currency.SEK">SEK</option>
+            <option value="@Currency.USD">USD</option>
         </InputSelect>
 
     </div>
@@ -99,7 +99,7 @@ else
     {
         public string Name { get; set; }
         public AccountType AccountType { get; set; }
-        public Valuta Currency { get; set; }
+        public Currency Currency { get; set; }
         public decimal InitialBalance { get; set; }
 
         public void Clear()

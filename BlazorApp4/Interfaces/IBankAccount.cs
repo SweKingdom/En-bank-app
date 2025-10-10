@@ -12,7 +12,7 @@ public interface IBankAccount
     Guid Id { get; }
     string Name { get; }
     Domain.AccountType AccountType { get; }
-    Valuta Currency {  get; }
+    Currency Currency {  get; }
     decimal Balance { get; }
     DateTime LastUpdated { get; }
 
