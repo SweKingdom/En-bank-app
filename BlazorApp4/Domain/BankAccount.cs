@@ -1,5 +1,7 @@
 ﻿
 
+using System.Text.Json.Serialization;
+
 namespace BlazorApp4.Domain
 {
     public class BankAccount : IBankAccount
@@ -23,6 +25,17 @@ namespace BlazorApp4.Domain
             Currency = currency;
             Balance = initialBalance;
             LastUpdated = DateTime.Now;
+        }
+
+        [JsonConstructor]
+        public BankAccount(Guid id, string name, AccountType accountType, Currency currency, decimal balance, DateTime lastUpdated)
+        {
+            Id = id;
+            Name = name;
+            AccountType = accountType;
+            Currency = currency;
+            Balance = balance;
+            LastUpdated = lastUpdated;
         }
 
 

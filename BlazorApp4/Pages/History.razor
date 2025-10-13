@@ -1,7 +1,51 @@
-﻿@page "/History"
+﻿@* @page "/history"
+@inject IAccountService AccountService
 
-<h3>History</h3>
+<h3>Transaktionshistorik</h3>
+
+@if (_transactions.Count == 0)
+{
+    <p>Inga transaktioner ännu.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Från konto</th>
+                <th>Till konto</th>
+                <th>Belopp</th>
+                <th>Datum</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in _transactions)
+            {
+                <tr>
+                    <td>@GetAccountName(t.FromAccountId)</td>
+                    <td>@GetAccountName(t.ToAccountId)</td>
+                    <td>@t.Amount</td>
+                    <td>@t.Date.ToLocalTime()</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
 @code {
+    private List<Transaction> _transactions = new();
 
+    protected override void OnInitialized()
+    {
+
+        _transactions = AccountService.GetTransactions();
+        base.OnInitialized();
+    }
+
+    private string GetAccountName(Guid id)
+    {
+        var acc = AccountService.GetAccounts().FirstOrDefault(a => a.Id == id);
+        return acc?.Name ?? "Okänt konto";
+    }
 }
+ *@
