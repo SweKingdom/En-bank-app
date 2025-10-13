@@ -1,7 +1,76 @@
-﻿@page "/Transfer"
+﻿@* @page "/transfer"
+@inject IAccountService AccountService
 
-<h3>NewTransaction</h3>
+<h3>Ny transaktion</h3>
+
+<EditForm Model="_model" OnValidSubmit="HandleTransfer">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Från konto:</label>
+        <InputSelect @bind-Value="_model.FromAccountId">
+            <option value="">Välj konto</option>
+            @foreach (var account in _accounts)
+            {
+                <option value="@account.Id">@account.Name (@account.Balance @account.Currency)</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div>
+        <label>Till konto:</label>
+        <InputSelect @bind-Value="_model.ToAccountId">
+            <option value="">Välj konto</option>
+            @foreach (var account in _accounts)
+            {
+                <option value="@account.Id">@account.Name (@account.Balance @account.Currency)</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div>
+        <label>Belopp:</label>
+        <InputNumber @bind-Value="_model.Amount" />
+    </div>
+
+    <button type="submit">Överför</button>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(_message))
+{
+    <p>@_message</p>
+}
 
 @code {
+    private TransferModel _model = new();
+    private List<IBankAccount> _accounts = new();
+    private string _message = string.Empty;
 
+    protected override void OnInitialized()
+    {
+        _accounts = AccountService.GetAccounts().ToList();
+        base.OnInitialized();
+    }
+
+    private void HandleTransfer()
+    {
+        try
+        {
+            AccountService.Transfer(_model.FromAccountId, _model.ToAccountId, _model.Amount);
+            _message = "Överföring genomförd!";
+        }
+        catch (Exception ex)
+        {
+            _message = $"Fel: {ex.Message}";
+        }
+    }
+
+    private class TransferModel
+    {
+        public Guid FromAccountId { get; set; }
+        public Guid ToAccountId { get; set; }
+        public decimal Amount { get; set; }
+    }
 }
+ *@

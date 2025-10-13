@@ -62,16 +62,15 @@ else
     private CreateAccountModel _model = new();
     private List<IBankAccount> _accounts = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        _accounts = AccountService.GetAccounts().ToList();
-        base.OnInitialized();
+        _accounts = await AccountService.GetAccounts();
     }
-    private Task CreateAccountAsync()
+
+    private async Task CreateAccountAsync()
     {
         try
         {
-            Console.WriteLine(_model.Name);
 
             AccountService.CreateAccount(
                 _model.Name,
@@ -80,17 +79,14 @@ else
                 _model.InitialBalance
             );
 
-            _accounts = AccountService.GetAccounts().ToList();
+            _accounts = await AccountService.GetAccounts();
             _model.Clear();
+            StateHasChanged();
         }
         catch(Exception exception)
         {
             Console.WriteLine(exception);
-            throw;
         }
-
-
-        return Task.CompletedTask;
     }
 
 
