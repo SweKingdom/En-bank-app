@@ -10,6 +10,7 @@ namespace BlazorApp4.Interfaces
 
         void Transfer(Guid fromAccountId, Guid ToAccountId, decimal amount);
 
-        List<Transaction> GetTransactions();
+        Task<List<Transaction>> GetTransactionsAsync();
+
     }
 }

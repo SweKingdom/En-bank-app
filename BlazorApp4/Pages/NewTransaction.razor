@@ -1,9 +1,9 @@
-﻿@* @page "/transfer"
+﻿@page "/transfer"
 @inject IAccountService AccountService
 
 <h3>Ny transaktion</h3>
 
-<EditForm Model="_model" OnValidSubmit="HandleTransfer">
+<EditForm Model="_model" OnValidSubmit="HandleTransferAsync">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
@@ -47,18 +47,18 @@
     private List<IBankAccount> _accounts = new();
     private string _message = string.Empty;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        _accounts = AccountService.GetAccounts().ToList();
-        base.OnInitialized();
+        _accounts = await AccountService.GetAccounts();
     }
 
-    private void HandleTransfer()
+    private async Task HandleTransferAsync()
     {
         try
         {
-            AccountService.Transfer(_model.FromAccountId, _model.ToAccountId, _model.Amount);
-            _message = "Överföring genomförd!";
+            await Task.Run(() => AccountService.Transfer(_model.FromAccountId, _model.ToAccountId, _model.Amount));
+            _message = "Överföring genomförd";
+            _accounts = await AccountService.GetAccounts(); //Uppdaterar saldo
         }
         catch (Exception ex)
         {
@@ -73,4 +73,3 @@
         public decimal Amount { get; set; }
     }
 }
- *@
