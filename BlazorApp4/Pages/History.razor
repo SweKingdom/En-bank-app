@@ -1,4 +1,4 @@
-﻿@* @page "/history"
+﻿@page "/history"
 @inject IAccountService AccountService
 
 <h3>Transaktionshistorik</h3>
@@ -34,18 +34,28 @@ else
 
 @code {
     private List<Transaction> _transactions = new();
+    private List<IBankAccount> _accounts = new();
+    private bool _isLoading = true;
 
-    protected override void OnInitialized()
+
+    protected override async Task OnInitializedAsync()
     {
 
-        _transactions = AccountService.GetTransactions();
-        base.OnInitialized();
+        _isLoading = true;
+
+
+        _accounts = await AccountService.GetAccounts();
+
+        _transactions = await AccountService.GetTransactionsAsync();
+
+
+        _isLoading = false;
+
     }
 
     private string GetAccountName(Guid id)
     {
-        var acc = AccountService.GetAccounts().FirstOrDefault(a => a.Id == id);
+        var acc = _accounts.FirstOrDefault(a => a.Id == id);
         return acc?.Name ?? "Okänt konto";
     }
 }
- *@
