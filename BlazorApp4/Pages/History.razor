@@ -3,59 +3,150 @@
 
 <h3>Transaktionshistorik</h3>
 
-@if (_transactions.Count == 0)
+<!-- Konto -->
+<div class="mb-3" style="max-width: 420px;">
+    <label class="form-label">Välj konto</label>
+    <InputSelect @bind-Value="_selectedAccountId" class="form-select">
+        <option value="@Guid.Empty">-- Välj ett konto --</option>
+        @foreach (var account in _accounts)
+        {
+            <option value="@account.Id">@account.Name</option>
+        }
+    </InputSelect>
+</div>
+
+<!-- Historik -->
+@if (_selectedAccountId == Guid.Empty)
 {
-    <p>Inga transaktioner ännu.</p>
+    <div class="alert alert-light border" style="max-width: 720px;">
+        Välj ett konto för att se transaktioner.
+    </div>
+}
+
+else if (!SelectedTransactions.Any())
+{
+    <div class="alert alert-light border" style="max-width: 720px;">
+        Inga transaktioner hittades för valt konto.
+    </div>
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Från konto</th>
-                <th>Till konto</th>
-                <th>Belopp</th>
-                <th>Datum</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var t in _transactions)
-            {
+    <!-- Lista för valt konto -->
+    <div class="table-responsive" style="max-width: 900px;">
+        <table class="table table-striped align-middle">
+            <thead class="table-light">
                 <tr>
-                    <td>@GetAccountName(t.FromAccountId)</td>
-                    <td>@GetAccountName(t.ToAccountId)</td>
-                    <td>@t.Amount</td>
-                    <td>@t.Date.ToLocalTime()</td>
+                    <th @onclick='() => SortBy("Date")' style="cursor:pointer">
+                        Datum @SortIndicator("Date")
+                    </th>
+                    <th>Typ</th>
+                    <th class="text-end" @onclick='() => SortBy("Amount") 'style="cursor:pointer">
+                        Belopp @SortIndicator("Amount")
+                    </th>
+                    <th>Från → Till</th>
+                    <th>Anteckningar</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var tx in SelectedTransactions)
+                {
+                    <tr>
+                        <td>@tx.TimeStamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@tx.Type</td>
+                        <td class="text-end">@tx.Amount.ToString("C")</td>
+                        <td>@AccountName(tx.FromAccountId) &rarr; @AccountName(tx.ToAccountId)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }
 
 @code {
-    private List<Transaction> _transactions = new();
     private List<IBankAccount> _accounts = new();
-    private bool _isLoading = true;
+    private List<Transaction> _transactions = new();
+    private Guid _selectedAccountId;
 
+    private TransactionType? _selectedType;
+    private decimal? _minAmount;
+    private decimal? _maxAmount;
+    private DateTime? _fromDate;
+    private DateTime? _toDate;
+
+    private string _sortColumn = "Date";
+    private bool _sortAscending = true;
 
     protected override async Task OnInitializedAsync()
     {
-
-        _isLoading = true;
-
-
-        _accounts = await AccountService.GetAccounts();
-
-        _transactions = await AccountService.GetTransactionsAsync();
-
-
-        _isLoading = false;
-
+        _accounts = (await AccountService.GetAccounts()).ToList();
+        _transactions = (await AccountService.GetTransactionsAsync()).ToList();
     }
 
-    private string GetAccountName(Guid id)
+    private IEnumerable<Transaction> SelectedTransactions
     {
-        var acc = _accounts.FirstOrDefault(a => a.Id == id);
-        return acc?.Name ?? "Okänt konto";
+        get
+        {
+            if (_selectedAccountId == Guid.Empty)
+                return Enumerable.Empty<Transaction>();
+
+            var query = _transactions
+                .Where(t => t.FromAccountId == _selectedAccountId || t.ToAccountId == _selectedAccountId);
+
+            if (_selectedType.HasValue)
+                query = query.Where(t => t.Type == _selectedType.Value);
+
+            if (_minAmount.HasValue)
+                query = query.Where(t => t.Amount >= _minAmount.Value);
+
+            if (_maxAmount.HasValue)
+                query = query.Where(t => t.Amount <= _maxAmount.Value);
+
+            if (_fromDate.HasValue)
+                query = query.Where(t => t.TimeStamp >= _fromDate.Value);
+
+            if (_toDate.HasValue)
+                query = query.Where(t => t.TimeStamp <= _toDate.Value);
+
+            query = _sortColumn switch
+            {
+                "Date" => _sortAscending ? query.OrderBy(t => t.TimeStamp) : query.OrderByDescending(t => t.TimeStamp),
+                "Amount" => _sortAscending ? query.OrderBy(t => t.Amount) : query.OrderByDescending(t => t.Amount),
+                _ => query
+            };
+
+            return query.ToList();
+        }
     }
+
+    private void SortBy(string column)
+    {
+        if (_sortColumn == column)
+            _sortAscending = !_sortAscending;
+        else
+        {
+            _sortColumn = column;
+            _sortAscending = true;
+        }
+    }
+
+    private string SortIndicator(string column)
+    {
+        if (_sortColumn != column)
+            return "";
+
+        return _sortAscending ? "▲" : "▼";
+    }
+
+    private string AccountName(Guid? accountId)
+    {
+        if (!accountId.HasValue)
+            return "(okänt konto)";
+
+        return _accounts.FirstOrDefault(a => a.Id == accountId.Value)?.Name ?? "(okänt konto)";
+    }
+
 }
+
+
+
+

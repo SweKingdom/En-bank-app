@@ -29,7 +29,6 @@ namespace BlazorApp4.Services
         /// <summary>
         /// Laddar konton från localStorage
         /// </summary>
-        
         public AccountService(IStorageService storageService) => _storageService = storageService;
 
 
@@ -53,7 +52,6 @@ namespace BlazorApp4.Services
         /// <summary>
         /// Laddar transaktioner från localStorage
         /// </summary>
-
         private async Task InitializeTransactionsAsync()
         {
             if (transactionsLoaded)
@@ -101,8 +99,6 @@ namespace BlazorApp4.Services
         /// <summary>
         /// Hämtar alla Transaktioner
         /// </summary>
-
-
         public async Task<List<Transaction>> GetTransactionsAsync()
         {
             await InitializeTransactionsAsync();
@@ -114,14 +110,13 @@ namespace BlazorApp4.Services
         /// <summary>
         /// Överföring 
         /// </summary>
-        
-        public async void Transfer(Guid fromAccountId, Guid toAccountId, decimal amount)
+        public async Task Transfer(Guid fromAccountId, Guid toAccountId, decimal amount)
         {
             await IsInitialized();
             await InitializeTransactionsAsync();
 
             if (amount <= 0)
-                throw new ArgumentException("Belloppet måste vara större än 0");
+                throw new ArgumentException("Beloppet måste vara större än 0");
 
             var fromAccount = _accounts.FirstOrDefault(a => a.Id == fromAccountId);
             var toAccount = _accounts.FirstOrDefault(a => a.Id == toAccountId);
@@ -130,16 +125,39 @@ namespace BlazorApp4.Services
                 throw new ArgumentException("Ett eller flera konton hittades inte");
 
             if (fromAccount.Balance < amount)
-                throw new ArgumentException("Otilräkligt saldo på avsändarkontot");
+                throw new ArgumentException("Otillräckligt saldo på avsändarkontot");
 
             fromAccount.Withdraw(amount);
             toAccount.Deposit(amount);
 
-            var transaction = new Transaction(fromAccountId, toAccountId, amount);
-            _transactions.Add(transaction);
+            // Skapa transaktioner
+            var transferOut = new Transaction
+            {
+                FromAccountId = fromAccountId,
+                ToAccountId = toAccountId,
+                Amount = amount,
+                TimeStamp = DateTime.Now,
+                Type = TransactionType.TransferOut
+            };
+
+            var transferIn = new Transaction
+            {
+                FromAccountId = fromAccountId,
+                ToAccountId = toAccountId,
+                Amount = amount,
+                TimeStamp = DateTime.Now,
+                Type = TransactionType.TransferIn
+            };
+
+            _transactions.Add(transferOut);
+            _transactions.Add(transferIn);
 
             await SaveAsync();
             await SaveTransactionsAsync();
         }
-    } 
+
+
+
+
+    }
 }
