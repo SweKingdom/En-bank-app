@@ -18,6 +18,14 @@ namespace BlazorApp4.Domain
 
         public DateTime LastUpdated { get; private set; }
 
+
+
+        private readonly List<Transaction> _transactions = new();
+        public IReadOnlyList<Transaction> Transactions => _transactions.AsReadOnly(); //tabort?
+
+
+
+
         public BankAccount(string name, AccountType accountType, Currency currency, decimal initialBalance)
         {
             Name = name;
@@ -43,17 +51,69 @@ namespace BlazorApp4.Domain
 
         public void Deposit(decimal amount)
         {
-            
-            if (amount < 0) { throw new NotImplementedException(); }
+            if (amount <= 0)
+                throw new ArgumentException("Beloppet måste vara större än 0.");
 
             Balance += amount;
+            LastUpdated = DateTime.Now;
+
+            _transactions.Add(new Transaction
+            {
+                ToAccountId = Id,
+                Amount = amount,
+                TimeStamp = DateTime.Now,
+                Type = TransactionType.Deposit
+            });
         }
+
 
         public void Withdraw(decimal amount)
         {
-            if (amount < 0) { throw new NotImplementedException(); }
+            if (amount <= 0)
+                throw new ArgumentException("Beloppet måste vara större än 0.");
+
+            if (amount > Balance)
+                throw new InvalidOperationException("Otillräckligt saldo.");
 
             Balance -= amount;
+            LastUpdated = DateTime.Now;
+
+            _transactions.Add(new Transaction
+            {
+                FromAccountId = Id,
+                Amount = amount,
+                TimeStamp = DateTime.Now,
+                Type = TransactionType.Withdraw
+            });
+        }
+
+        public void TransferTo(BankAccount toAccount, decimal amount)
+        {
+            //Från vilket konto
+            Balance -= amount;
+            LastUpdated = DateTime.UtcNow;
+            _transactions.Add(new Transaction
+            {
+                Type = TransactionType.TransferOut,
+                Amount = amount,
+                BalanceAfter = Balance,
+                FromAccountId = Id,
+                ToAccountId = toAccount.Id,
+
+            });
+
+            //Till vilketkonmto
+
+            toAccount.Balance += amount;
+            toAccount.LastUpdated = DateTime.UtcNow;
+            toAccount._transactions.Add(new Transaction
+            {
+                Type = TransactionType.TransferIn,
+                Amount = amount,
+                BalanceAfter = Balance,
+                FromAccountId = Id,
+                ToAccountId = toAccount.Id,
+            });
         }
     }
 }
