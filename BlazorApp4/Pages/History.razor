@@ -52,7 +52,7 @@ else
                 {
                     <tr>
                         <td>@tx.TimeStamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
-                        <td>@tx.Type</td>
+                        <td>@GetTransactionTypeForDisplay(tx)</td>
                         <td class="text-end">@tx.Amount.ToString("C")</td>
                         <td>@AccountName(tx.FromAccountId) &rarr; @AccountName(tx.ToAccountId)</td>
                     </tr>
@@ -144,6 +144,41 @@ else
 
         return _accounts.FirstOrDefault(a => a.Id == accountId.Value)?.Name ?? "(okänt konto)";
     }
+
+
+    private string GetTransactionTypeForDisplay(Transaction tx)
+    {
+        var isToInternal = tx.ToAccountId.HasValue && _accounts.Any(a => a.Id == tx.ToAccountId.Value);
+        var isFromInternal = tx.FromAccountId.HasValue && _accounts.Any(a => a.Id == tx.FromAccountId.Value);
+
+        if (Guid.TryParse(SelectedAccountId, out var accountId))
+        {
+            if (tx.FromAccountId == accountId)
+            {
+                return "Överfört";
+            }
+            if (tx.ToAccountId == accountId)
+            {
+                return "Mottaget";
+            }
+        }
+
+        if (isFromInternal && isToInternal)
+        {
+            return "Överföring";
+        }
+        if (isFromInternal)
+        {
+            return "Uttag";
+        }
+        if (isToInternal)
+        {
+            return "Insättning";
+        }
+
+        return tx.TransactionType.ToString();
+    }
+
 
 }
 
