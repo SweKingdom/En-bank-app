@@ -45,12 +45,15 @@
 }
 else
 {
-    <ul>
+    <ul lass="list-group">
         @foreach(var account in _accounts)
         {
-            <li>
-                <strong>@account.Name</strong> - @account.AccountType - @account.Balance - @account.Currency
-                <small>(Uppdaterad @account.LastUpdated.ToLocalTime())</small>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>@account.Name</strong> - @account.AccountType - @account.Balance - @account.Currency
+                    <small>(uppdaterad @account.LastUpdated.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"))</small>
+                </div>
+                <button class="btn btn-danger btn-sm" @onclick="() => DeleteAccountAsync(account.Id)">Delete </button>
             </li>
         }
     </ul>
@@ -60,50 +63,79 @@ else
 
 @code {
     private CreateAccountModel _model = new();
-    private List<IBankAccount> _accounts = new();
+    private List<BankAccount> _accounts = new();
+
 
     protected override async Task OnInitializedAsync()
     {
-        _accounts = await AccountService.GetAccounts();
+        await AccountService.EnsureLoadedAsync();
+        _accounts = AccountService.GetAccounts();
     }
+
 
     private async Task CreateAccountAsync()
     {
         try
         {
+            Console.WriteLine(_model.Name);
 
-            AccountService.CreateAccount(
+            await AccountService.CreateAccount(
                 _model.Name,
                 _model.AccountType,
                 _model.Currency,
-                _model.InitialBalance
-            );
+                _model.InitialBalance);
 
-            _accounts = await AccountService.GetAccounts();
+            _accounts = AccountService.GetAccounts();
             _model.Clear();
-            StateHasChanged();
         }
-        catch(Exception exception)
+
+        catch (Exception exception)
         {
             Console.WriteLine(exception);
+            throw;
+
+        }
+    }
+
+    private async Task DeleteAccountAsync(Guid Id)
+    {
+        bool confirm = await JS.InvokeAsync<bool>("confirm", $"Vill du verkligen ta bort kontot?");
+        if (!confirm)
+            return;
+
+        try
+        {
+            await AccountService.DeleteAccount(Id);
+            _accounts = AccountService.GetAccounts(); // uppdaterar listan
+            StateHasChanged(); // uppdaterar UI
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Fel vid borttagning av konto: {ex.Message}");
         }
     }
 
 
-
+    /// <summary>
+    ///
+    /// </summary>
+    ///
     private class CreateAccountModel
     {
-        public string Name { get; set; }
+        public string? Name { get; set; }
         public AccountType AccountType { get; set; }
         public Currency Currency { get; set; }
-        public decimal InitialBalance { get; set; }
+        public decimal InitialBalance { get; set; } = 0;
 
         public void Clear()
         {
             Name = string.Empty;
-            Currency = default;
+            AccountType = AccountType.Deposit;
+            Currency = Currency.SEK;
             InitialBalance = 0;
-            AccountType = default;
         }
     }
+
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
 }

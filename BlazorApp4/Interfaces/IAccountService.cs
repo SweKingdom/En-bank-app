@@ -3,15 +3,14 @@ namespace BlazorApp4.Interfaces
 {
     public interface IAccountService
     {
-        Task <IBankAccount> CreateAccount(string name, Domain.AccountType accountType, Currency currency, decimal initialBalance);
+        Task<BankAccount> CreateAccount(string name, AccountType accountType, Currency currency, decimal initialBalance);
+        List<BankAccount> GetAccounts();
 
+        Task DeleteAccount(Guid Id);
+        Task UpdateAccount(BankAccount updatedAccount);
 
-        Task<List<IBankAccount>> GetAccounts();
-
-        Task Transfer(Guid fromAccountId, Guid ToAccountId, decimal amount);
-
-        Task<List<Transaction>> GetTransactionsAsync();
-        
+        Task Transfer(Guid fromAccountId, Guid toAccountId, decimal amount);
+        Task EnsureLoadedAsync();
 
     }
 }

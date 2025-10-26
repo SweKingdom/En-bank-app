@@ -2,10 +2,12 @@
 {
     public interface IStorageService
     {
-        //Spara
+        //spara
         Task SetItemAsync<T>(string key, T value);
-        //Hämta
-        Task<T> GetItemsAsync<T>(string key);
+        //hämta
+        Task<T> GetItemAsync<T>(string key);
 
+        Task<string> GetItemAsStringAsync(string key);
+        Task SetItemAsStringAsync(string key, string value);
     }
 }

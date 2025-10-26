@@ -1,162 +1,90 @@
 ﻿
-
-using System.Diagnostics.Metrics;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-
 namespace BlazorApp4.Services
 {
     public class AccountService : IAccountService
     {
-
-
-        private const string StorageKey = "bankapp.accounts";
-        private const string TransactionsKey = "bankapp.transactions";
-
+        private const string StorageKey = "BlazorApp4.accounts";
         private readonly List<BankAccount> _accounts = new();
-        private readonly List<Transaction> _transactions = new();
-
         private readonly IStorageService _storageService;
 
-
-
-
         private bool isLoaded;
-        private bool transactionsLoaded;
 
+        public AccountService(IStorageService storageService)
+        {
+            _storageService = storageService;
 
+        }
 
-        /// <summary>
-        /// Laddar konton från localStorage
-        /// </summary>
-        public AccountService(IStorageService storageService) => _storageService = storageService;
-
-
-        private async Task IsInitialized()
+        public async Task EnsureLoadedAsync()
         {
             if (isLoaded)
             {
                 return;
             }
+            await IsInitialized();
+            isLoaded = true;
+        }
 
-            var fromStorage = await _storageService.GetItemsAsync<List<BankAccount>>(StorageKey);
-            _accounts.Clear();
+        private async Task IsInitialized()
+        {
+            var fromStorage = await _storageService.GetItemAsync<List<BankAccount>>(StorageKey);
             if (fromStorage is { Count: > 0 })
-
                 _accounts.AddRange(fromStorage);
             isLoaded = true;
-
         }
 
+        private Task SaveAsync() => _storageService.SetItemAsync(StorageKey, _accounts.OfType<BankAccount>().ToList());
 
-        /// <summary>
-        /// Laddar transaktioner från localStorage
-        /// </summary>
-        private async Task InitializeTransactionsAsync()
+        public async Task<BankAccount> CreateAccount(string name, AccountType accountType, Currency currency, decimal initialBalance)
         {
-            if (transactionsLoaded)
-            {
-                return;
-            }
-            var fromStorage = await _storageService.GetItemsAsync<List<Transaction>>(TransactionsKey);
-            _transactions.Clear();
-            if (fromStorage is { Count: > 0 })
-                _transactions.AddRange(fromStorage);
-
-            transactionsLoaded = true;
-        }
-
-
-
-        private Task SaveAsync() => _storageService.SetItemAsync(StorageKey, _accounts);
-
-
-        private Task SaveTransactionsAsync() => _storageService.SetItemAsync(TransactionsKey, _transactions);
-
-
-        public async Task<IBankAccount> CreateAccount(string name, Domain.AccountType accountType, Currency currency, decimal initialBalance)
-        {
-            await IsInitialized();
             var account = new BankAccount(name, accountType, currency, initialBalance);
             _accounts.Add(account);
             await SaveAsync();
             return account;
         }
 
-
-        /// <summary>
-        /// Hämtar alla konton
-        /// </summary>
-
-
-        public async Task<List<IBankAccount>> GetAccounts()
+        public List<BankAccount> GetAccounts()
         {
-            await IsInitialized();
-            return _accounts.Cast<IBankAccount>().ToList();
+            return _accounts.Cast<BankAccount>().ToList();
         }
 
-
-        /// <summary>
-        /// Hämtar alla Transaktioner
-        /// </summary>
-        public async Task<List<Transaction>> GetTransactionsAsync()
+        public async Task DeleteAccount(Guid Id)
         {
-            await InitializeTransactionsAsync();
-            return _transactions;
+            var accountToRemove = _accounts.FirstOrDefault(account => account.Id == Id);
+
+            if (accountToRemove is not null)
+            {
+                _accounts.Remove(accountToRemove);
+                await SaveAsync();
+            }
         }
 
+        public async Task UpdateAccount(BankAccount updatedAccount)
+        {
+            var existing = _accounts.FirstOrDefault(account => account.Id == updatedAccount.Id);
+            if (existing != null)
+            {
+                _accounts.Remove(existing);
+                _accounts.Add(updatedAccount);
+                await SaveAsync();
+            }
+        }
 
-
-        /// <summary>
-        /// Överföring 
-        /// </summary>
         public async Task Transfer(Guid fromAccountId, Guid toAccountId, decimal amount)
         {
-            await IsInitialized();
-            await InitializeTransactionsAsync();
-
-            if (amount <= 0)
-                throw new ArgumentException("Beloppet måste vara större än 0");
-
-            var fromAccount = _accounts.FirstOrDefault(a => a.Id == fromAccountId);
-            var toAccount = _accounts.FirstOrDefault(a => a.Id == toAccountId);
-
-            if (fromAccount == null || toAccount == null)
-                throw new ArgumentException("Ett eller flera konton hittades inte");
+            var fromAccount = _accounts.OfType<BankAccount>().FirstOrDefault(a => a.Id == fromAccountId)
+            ?? throw new KeyNotFoundException($"Account with ID {fromAccountId} not found.");
+            var toAccount = _accounts.OfType<BankAccount>().FirstOrDefault(a => a.Id == toAccountId)
+            ?? throw new KeyNotFoundException($"Account with ID {toAccountId} not found.");
 
             if (fromAccount.Balance < amount)
-                throw new ArgumentException("Otillräckligt saldo på avsändarkontot");
-
-            fromAccount.Withdraw(amount);
-            toAccount.Deposit(amount);
-
-            // Skapa transaktioner
-            var transferOut = new Transaction
-            {
-                FromAccountId = fromAccountId,
-                ToAccountId = toAccountId,
-                Amount = amount,
-                TimeStamp = DateTime.Now,
-                Type = TransactionType.TransferOut
-            };
-
-            var transferIn = new Transaction
-            {
-                FromAccountId = fromAccountId,
-                ToAccountId = toAccountId,
-                Amount = amount,
-                TimeStamp = DateTime.Now,
-                Type = TransactionType.TransferIn
-            };
-
-            _transactions.Add(transferOut);
-            _transactions.Add(transferIn);
+                throw new InvalidOperationException("Otillräckliga medel på från-kontot.");
+            if (amount <= 0)
+                throw new ArgumentOutOfRangeException(nameof(amount), "Beloppet måste vara positivt.");
+            fromAccount.TransferTo(toAccount, amount);
 
             await SaveAsync();
-            await SaveTransactionsAsync();
         }
-
-
 
 
     }
