@@ -3,7 +3,9 @@
 namespace BlazorApp4.Domain
 {
 
-
+    /// <summary>
+    /// Transaction domain, manages transactions, their types, time, account ID and curencys
+    /// </summary>
     public class Transaction
     {
         public Guid Id { get; set; } = Guid.NewGuid();

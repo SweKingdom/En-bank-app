@@ -1,6 +1,7 @@
 ﻿@page "/TransactionHistory"
 @inject IAccountService AccountService
 
+<!-- Transaction history -->
 <h3 class="mb-3">Transaction History</h3>
 
 @if (_accounts.Count == 0)
@@ -9,6 +10,7 @@
 }
 else
 {
+    <!-- Account selection -->
     <div class="mb-2">
         <label>Choose Account</label>
         <InputSelect TValue="Guid"
@@ -19,10 +21,10 @@ else
             {
                 <option value="@account.Id">@account.Name - Balance: @account.Balance</option>
             }
-
         </InputSelect>
     </div>
 
+    <!-- Sortbutton (date/amount) -->
     <div class="mb-2">
         <button class="btn btn-sm" @onclick="() => SetSort(SortKey.Date)">
             ↓↑ Date @(currentKey == SortKey.Date ? (descending ? "↓" : "↑") : "")
@@ -31,19 +33,15 @@ else
             ↓↑ Amount @(currentKey == SortKey.Amount ? (descending ? "↓" : "↑") : "")
         </button>
     </div>
-
 }
 
 @if (_selectedAccount == null)
 {
     <p> Choose Account </p>
 }
-@* else if(_selectedAccount.Transactions?.Any() ?? false)
-    {
-    <p>inga transaktioner än</p>
-    } *@
 else
 {
+    <!-- Transaction table -->
     <table class="table table-sm">
         <thead>
             <tr>
@@ -55,7 +53,6 @@ else
             </tr>
         </thead>
         <tbody>
-
             @foreach (var transaction in sortedTransaction())
             {
                 <tr>
@@ -75,22 +72,28 @@ else
     </table>
 }
 
-
-
-
+<!-- Code for design -->
 @code {
+    /// List and fields
     private List<BankAccount> _accounts = new();
     private BankAccount? _selectedAccount;
     private Guid _selectedAccountId;
     private SortKey currentKey = SortKey.Date;
     private bool descending = true;
 
+    /// <summary>
+    /// Sorting options for transaction list
+    /// </summary>
     private enum SortKey
     {
         Date,
         Amount
     }
 
+    /// <summary>
+    /// Toggles sorting key and direction on user click on button
+    /// </summary>
+    /// <param name="sortKey">Sorting options</param>
     private void SetSort(SortKey sortKey)
     {
         if (currentKey == sortKey)
@@ -104,6 +107,10 @@ else
         }
     }
 
+    /// <summary>
+    /// Property for binding the selected accounts ID in the dropdown
+    /// Updates the selected account and triggers UI refresh
+    /// </summary>
     private Guid SelectedAccountId
     {
         get => _selectedAccountId;
@@ -117,27 +124,34 @@ else
         }
     }
 
+    /// <summary>
+    /// Loads all accounts on component initialized and selects the first by default
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         await AccountService.EnsureLoadedAsync();
         _accounts = AccountService.GetAccounts();
 
-        // om det finns konton i vår lista, välj första för att visa i UI
+        // If there is accounts in our lust, chose first to show in UI
         if (_accounts.Count > 0)
         {
             _selectedAccountId = _accounts[0].Id;
             _selectedAccount = _accounts[0];
         }
-
         StateHasChanged();
     }
 
+    /// <summary>
+    /// Returns a sorted list of trasactions for the selected account
+    /// Sorting is depended on curent KeySort and order
+    /// </summary>
+    /// <returns>Sorted and orderd Enumerable</returns>
     private IEnumerable<Transaction> sortedTransaction()
     {
         if (_selectedAccount == null)
             return Enumerable.Empty<Transaction>();
 
-        // sortera listan på datum och belopp
+        // Sorts enummerable on date and amount
         var sortedList = _selectedAccount.Transactions.AsEnumerable();
         sortedList = currentKey switch
         {
@@ -150,7 +164,4 @@ else
         };
         return sortedList;
     }
-
-
-
 }

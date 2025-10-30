@@ -1,7 +1,7 @@
 ﻿@page "/NewTransaction"
 @inject IAccountService AccountService
 
-
+<!-- Transaction page -->
 <h3 class="mb-3">Transaction</h3>
 
 @if (_accounts.Count < 2)
@@ -10,10 +10,12 @@
 }
 else
 {
+    <!-- Transaction form -->
     <EditForm Model="_model" OnValidSubmit="OnSubmitAsync">
         <DataAnnotationsValidator />
         <ValidationSummary class="text-danger mb-3" />
 
+        <!-- Transfer from -->
         <div class="mb-3">
             <label class="form-label">Transfer from</label>
             <InputSelect TValue="Guid"
@@ -28,6 +30,7 @@ else
             </InputSelect>
         </div>
 
+        <!-- Transfer to -->
         <div class="mb-3">
             <label class="form-label">Transfer to</label>
             <InputSelect TValue="Guid"
@@ -42,15 +45,19 @@ else
             </InputSelect>
         </div>
 
+        <!-- Amount -->
         <div class="mb-3">
             <label class="form-label">Amount</label>
             <InputNumber TValue="decimal" @bind-Value="_model.Amount" class="form-control" min="0.01" step="0.01" />
         </div>
+
+        <!-- Submit button -->
         <div class="mb-3">
             <button type="submit" class="btn btn-primary ">Complete Transaction</button>
         </div>
     </EditForm>
 
+    <!-- Account overwiev -->
     <div>
         <h3 class="mb-3">All accounts</h3>
         <ul class="list-group">
@@ -66,13 +73,17 @@ else
     </div>
 }
 
-
+<!-- Coding stuff -->
 @code
 {
+    /// Private lists and models
     private readonly TransferFormModel _model = new();
     private List<BankAccount> _accounts = new();
     private List<BankAccount> _toAccounts = new();
 
+    /// <summary>
+    /// Represent the transfer form field
+    /// </summary>
     private class TransferFormModel
     {
         public Guid FromAccountId { get; set; }
@@ -80,39 +91,38 @@ else
         public decimal Amount { get; set; }
     }
 
-
+    /// <summary>
+    /// Loads all account when the component initializes
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         await AccountService.EnsureLoadedAsync();
         _accounts = AccountService.GetAccounts();
-
         _toAccounts = _accounts;
     }
 
+    /// <summary>
+    /// Handels form submission for completing a transfer between two accounts
+    /// Includes validation and refreshes the account list
+    /// </summary>
     private async Task OnSubmitAsync()
     {
-        if (_model.FromAccountId == Guid.Empty || _model.ToAccountId == Guid.Empty)
+        if (_model.FromAccountId == Guid.Empty || _model.ToAccountId == Guid.Empty) //Checks if both account selcted are not the same
         {
             StateHasChanged();
-            //return Task.CompletedTask;
         }
-
         if (_model.FromAccountId == _model.ToAccountId)
         {
             StateHasChanged();
-            //return Task.CompletedTask;
         }
         try
         {
-            await AccountService.Transfer(_model.FromAccountId, _model.ToAccountId, _model.Amount);
+            await AccountService.Transfer(_model.FromAccountId, _model.ToAccountId, _model.Amount); //Perform transfer
+            _accounts = AccountService.GetAccounts();   //Updating list
 
-            //uppdatera lista
-            _accounts = AccountService.GetAccounts();
-
-            //visa bekräftelse
+            //Show confirmation
             var from = _accounts.First(x => x.Id == _model.FromAccountId);
             var to = _accounts.First(x => x.Id == _model.ToAccountId);
-
             _model.Amount = 0;
             StateHasChanged();
         }
@@ -120,9 +130,11 @@ else
         {
             Console.WriteLine(exception.Message);
         }
-
     }
 
+    /// <summary>
+    /// Parses the new value and updates available "To" account
+    /// </summary>
     private void HandleFormChanged(ChangeEventArgs eventArgs)
     {
         if (Guid.TryParse(eventArgs.Value?.ToString(), out var id))
@@ -131,11 +143,15 @@ else
         }
     }
 
+    /// <summary>
+    /// Uppdates the "To" account list based on the "From" account.
+    /// Prevents selecting the same account 
+    /// </summary>
+    /// <param name="fromId">The selected account ID</param>
     private void OnFormChanged(Guid fromId)
     {
         _model.FromAccountId = fromId;
         var from = _accounts.FirstOrDefault(x => x.Id == fromId);
-
         if (from != null)
         {
             _toAccounts = _accounts.Where(account => account.Id != fromId).ToList();
@@ -146,6 +162,5 @@ else
         }
         _model.ToAccountId = Guid.Empty;
     }
-
 }
 
