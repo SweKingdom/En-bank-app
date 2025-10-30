@@ -1,4 +1,5 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿<!-- Side navigation meny -->
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">BlazorApp4</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -7,6 +8,7 @@
     </div>
 </div>
 
+<!-- Homepage -->
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="flex-column">
         <div class="nav-item px-3">
@@ -14,16 +16,22 @@
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
             </NavLink>
         </div>
+
+        <!-- Accounts page -->
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="CreateAccount">
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Accounts
             </NavLink>
         </div>
+
+        <!-- Transaction page -->
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="NewTransaction">
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Transaction
             </NavLink>
         </div>
+
+        <!-- Transaction history page -->
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="TransactionHistory">
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Transaction History

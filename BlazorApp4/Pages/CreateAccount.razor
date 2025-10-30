@@ -1,14 +1,19 @@
 ﻿@page "/CreateAccount"
 @inject IAccountService AccountService
 
+<!-- Create account form -->
 <h3>Vänligen skapa ett konto</h3>
 <EditForm Model="_model" OnValidSubmit="CreateAccountAsync">
     <DataAnnotationsValidator />
     <ValidationSummary />
+
+    <!-- Account name -->
     <div>
         <label>Kontonamn</label>
         <InputText @bind-Value="_model.Name" />
     </div>
+
+    <!-- Account type -->
     <div>
         <label>Kontotyp</label>
         <InputSelect @bind-Value="_model.AccountType">
@@ -17,6 +22,8 @@
             <option value="@AccountType.Savings">Sparkonto</option>
         </InputSelect>
     </div>
+
+    <!-- Curency -->
     <div>
         <label>Valuta</label>
         <InputSelect @bind-Value="_model.Currency">
@@ -25,8 +32,9 @@
             <option value="@Currency.SEK">SEK</option>
             <option value="@Currency.USD">USD</option>
         </InputSelect>
-
     </div>
+
+    <!-- Inital amount -->
     <div>
         <label>Start saldo</label>
         <InputNumber @bind-Value="_model.InitialBalance" />
@@ -34,10 +42,7 @@
     <button type="submit">Skapa</button>
 </EditForm>
 
-
-
-<!--Lägg till alla konton-->
-
+<!-- Show accounts -->
 <h4>Alla konton</h4>
 @if(_accounts.Count == 0)
 {
@@ -53,26 +58,30 @@ else
                     <strong>@account.Name</strong> - @account.AccountType - @account.Balance - @account.Currency
                     <small>(uppdaterad @account.LastUpdated.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"))</small>
                 </div>
+                <!-- Remove account button -->
                 <button class="btn btn-danger btn-sm" @onclick="() => DeleteAccountAsync(account.Id)">Delete </button>
             </li>
         }
     </ul>
 }
 
-
-
 @code {
-    private CreateAccountModel _model = new();
-    private List<BankAccount> _accounts = new();
+    /// Private fields and models
+    private CreateAccountModel _model = new(); // Holds form data for new account
+    private List<BankAccount> _accounts = new(); // List all excisting accounts
 
-
+    /// <summary>
+    /// Ensures accounts are loaded from the service, called when component is initialized
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         await AccountService.EnsureLoadedAsync();
         _accounts = AccountService.GetAccounts();
     }
 
-
+    /// <summary>
+    /// Handels account creation when when inputted from HTML. Validates and sends data to the AccountService.
+    /// </summary>
     private async Task CreateAccountAsync()
     {
         try
@@ -85,7 +94,10 @@ else
                 _model.Currency,
                 _model.InitialBalance);
 
+            // Refresh list of accounts
             _accounts = AccountService.GetAccounts();
+
+            //Resets form field
             _model.Clear();
         }
 
@@ -93,10 +105,13 @@ else
         {
             Console.WriteLine(exception);
             throw;
-
         }
     }
 
+    /// <summary>
+    /// Handels account deletion after confermation
+    /// </summary>
+    /// <param name="Id">ID of account</param>
     private async Task DeleteAccountAsync(Guid Id)
     {
         bool confirm = await JS.InvokeAsync<bool>("confirm", $"Vill du verkligen ta bort kontot?");
@@ -115,11 +130,9 @@ else
         }
     }
 
-
     /// <summary>
-    ///
+    /// A internal model class representing the data required to create a new account
     /// </summary>
-    ///
     private class CreateAccountModel
     {
         public string? Name { get; set; }
@@ -127,6 +140,9 @@ else
         public Currency Currency { get; set; }
         public decimal InitialBalance { get; set; } = 0;
 
+        /// <summary>
+        /// Resets model to default
+        /// </summary>
         public void Clear()
         {
             Name = string.Empty;
