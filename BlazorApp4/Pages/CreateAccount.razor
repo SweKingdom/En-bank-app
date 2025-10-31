@@ -65,6 +65,9 @@ else
     </ul>
 }
 
+<button class="btn btn-success mb-3" @onclick="ApplyInterestAsync">Applicera ränta på sparkonton</button>
+
+
 @code {
     /// Private fields and models
     private CreateAccountModel _model = new(); // Holds form data for new account
@@ -151,6 +154,16 @@ else
             InitialBalance = 0;
         }
     }
+
+    private async Task ApplyInterestAsync()
+    {
+        await AccountService.ApplyInterestToSavingsAccounts();
+        _accounts = AccountService.GetAccounts();
+        StateHasChanged();
+    }
+
+
+
 
     [Inject] private IJSRuntime JS { get; set; } = default!;
 

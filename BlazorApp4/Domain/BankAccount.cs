@@ -18,6 +18,10 @@ namespace BlazorApp4.Domain
         public DateTime LastUpdated { get; private set; }
         public readonly List<Transaction> _transaction = new();
         public List<Transaction> Transactions => _transaction;
+        private const decimal DefaultInterestRate = 0.02m; // 2% per år
+        public decimal InterestRate { get; private set; } = DefaultInterestRate;
+
+
 
         // Constructor
         public BankAccount(string name, AccountType accountType, Currency currency, decimal initialBalance)
@@ -116,6 +120,31 @@ namespace BlazorApp4.Domain
                 Amount = amount,
                 BalanceAfterTransaction = Balance
             });
+        }
+
+        public void ApplyInterest()
+        {
+            if (AccountType != AccountType.Savings)
+                return;
+            var daysElapsed = (DateTime.Now - LastUpdated).Days;
+            if (daysElapsed <= 0) return;
+            decimal dailyRate = InterestRate / 365m;
+            decimal interestAmount = Balance * dailyRate * daysElapsed;
+
+            if (interestAmount <= 0) return;
+
+            Balance += Math.Round(interestAmount, 2);
+            LastUpdated = DateTime.Now;
+
+            _transaction.Add(new Transaction
+            {
+                transactionType = TransactionType.Interest,
+                Amount = Math.Round(interestAmount, 2),
+                BalanceAfterTransaction = Balance,
+                TimeStamp = DateTime.Now
+            });
+
+
         }
     }
 }

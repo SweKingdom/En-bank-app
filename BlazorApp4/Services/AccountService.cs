@@ -129,6 +129,15 @@ namespace BlazorApp4.Services
             await SaveAsync();
         }
 
+        public async Task ApplyInterestToSavingsAccounts()
+        {
+            foreach (var account in _accounts.Where(a => a.AccountType == AccountType.Savings))
+            {
+                account.ApplyInterest();
+            }
+
+            await SaveAsync();
+        }
 
     }
 }

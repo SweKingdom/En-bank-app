@@ -9,7 +9,8 @@ public enum TransactionType
     Deposit,
     Withdraw,
     TransferIn,
-    TransferOut
+    TransferOut,
+    Interest
 }
 
 /// <summary>
