@@ -1,10 +1,15 @@
 ﻿@page "/NewTransaction"
 @inject IAccountService AccountService
+@inject AppState AppState
+@inject NavigationManager Navigation
 
 <!-- Transaction page -->
 <h3 class="mb-3">Transaction</h3>
-
-@if (_accounts.Count < 2)
+@if (!AppState.IsLoggedIn)
+{
+    <p class="text-danger">Du är inte inloggad. Omdirigerar...</p>
+}
+else if (_accounts.Count < 2)
 {
     <p>Skapa minst två konton för att göra en transaktion</p>
 }
@@ -96,6 +101,13 @@ else
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
+        // Inloggningskontroll
+        if (!AppState.IsLoggedIn)
+        {
+            Navigation.NavigateTo("/home", replace: true);
+            return;
+        }
+
         await AccountService.EnsureLoadedAsync();
         _accounts = AccountService.GetAccounts();
         _toAccounts = _accounts;
