@@ -1,5 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@using BlazorApp4.Services
 @inject IAccountService AccountService
+@inject NavigationManager Navigation
 
 <div class="page">
     <div class="sidebar">
@@ -8,7 +10,7 @@
 
     <main>
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            <button class="btn btn-link" @onclick="HandleLogout">Logga ut</button>
         </div>
 
         <article class="content px-4">
@@ -17,6 +19,15 @@
     </main>
 </div>
 
-@code {
 
+
+@code {
+    [Inject] private AppState AppState { get; set; } = default!;
+
+    private Task HandleLogout()
+    {
+        AppState.SetLoggedIn(false);
+        Navigation.NavigateTo("/home", replace: true);
+        return Task.CompletedTask;
+    }
 }

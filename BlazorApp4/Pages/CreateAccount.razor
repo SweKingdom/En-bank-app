@@ -1,5 +1,7 @@
 ﻿@page "/CreateAccount"
 @inject IAccountService AccountService
+@inject AppState AppState
+@inject NavigationManager Navigation
 
 <!-- Create account form -->
 <h3>Vänligen skapa ett konto</h3>
@@ -78,6 +80,11 @@ else
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
+        if (!AppState.IsLoggedIn)
+        {
+            Navigation.NavigateTo("/home", replace: true);
+            return;
+        }
         await AccountService.EnsureLoadedAsync();
         _accounts = AccountService.GetAccounts();
     }

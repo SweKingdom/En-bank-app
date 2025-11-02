@@ -1,5 +1,7 @@
 ﻿@page "/TransactionHistory"
 @inject IAccountService AccountService
+@inject AppState AppState
+@inject NavigationManager Navigation
 
 <!-- Transaction history -->
 <h3 class="mb-3">Transaction History</h3>
@@ -129,6 +131,11 @@ else
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
+        if (!AppState.IsLoggedIn)
+        {
+            Navigation.NavigateTo("/home", replace: true);
+            return;
+        }
         await AccountService.EnsureLoadedAsync();
         _accounts = AccountService.GetAccounts();
 

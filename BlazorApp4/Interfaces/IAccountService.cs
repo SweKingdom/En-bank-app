@@ -13,6 +13,8 @@ namespace BlazorApp4.Interfaces
         Task EnsureLoadedAsync();
         Task ApplyInterestToSavingsAccounts();
 
+        Task<bool> ValidatePinAsync(string pin);
+
 
     }
 }

@@ -13,6 +13,7 @@ namespace BlazorApp4.Services
         private readonly List<BankAccount> _accounts = new();
         private readonly IStorageService _storageService;
         private bool isLoaded;
+        private const string CorrectPin = "1234";
 
         /// Constructor
         public AccountService(IStorageService storageService)
@@ -139,5 +140,6 @@ namespace BlazorApp4.Services
             await SaveAsync();
         }
 
+        public Task<bool> ValidatePinAsync(string pin) => Task.FromResult(pin == CorrectPin);
     }
 }
