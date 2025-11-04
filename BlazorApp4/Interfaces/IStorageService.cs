@@ -9,5 +9,9 @@
 
         Task<string> GetItemAsStringAsync(string key);
         Task SetItemAsStringAsync(string key, string value);
+
+        Task DownloadFileAsync(string fileName, string content);
+
+        Task<string> ReadFileAsync();
     }
 }

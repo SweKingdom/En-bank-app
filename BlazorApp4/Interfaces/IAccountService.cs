@@ -15,6 +15,10 @@ namespace BlazorApp4.Interfaces
 
         Task<bool> ValidatePinAsync(string pin);
 
+        Task ExportTransactionsAsync(Guid accountId);
+
+        Task ImportTransactionAsync();
+
 
     }
 }
