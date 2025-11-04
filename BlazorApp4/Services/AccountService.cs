@@ -1,4 +1,6 @@
 ﻿
+using System.Text.Json;
+
 namespace BlazorApp4.Services
 {
     /// <summary>
@@ -141,5 +143,101 @@ namespace BlazorApp4.Services
         }
 
         public Task<bool> ValidatePinAsync(string pin) => Task.FromResult(pin == CorrectPin);
+
+
+        public async Task ExportTransactionsAsync(Guid accountId)
+        {
+            await EnsureLoadedAsync();
+
+            var account = _accounts.FirstOrDefault(a => a.Id == accountId);
+            if (account == null)
+            {
+                Console.WriteLine($"[AccountService] X Account {accountId} not found");
+                return;
+            }
+
+            var exportData = new // Format på filen
+            {
+                account.Id,
+                account.Name,
+                account.AccountType,
+                account.Currency,
+                account.Balance,
+                Transactions = account.Transactions.Select(t => new
+                {
+                    t.TimeStamp,
+                    t.Amount,
+                    t.transactionType,
+                    t.BalanceAfterTransaction,
+                    FromAccount = t.FromAccountId,
+                    ToAccount = t.ToAccountId,
+                    t.Currency
+                })
+            };
+            var json = JsonSerializer.Serialize(exportData, new JsonSerializerOptions// Converts C# obj -> JSON sting
+            {
+                WriteIndented = true
+            });
+            await _storageService.DownloadFileAsync($"{account.Name}_transactions.json", json); //Nedladdning
+        }
+        public async Task DownloadFileAsync(string fileName, string content)
+        {
+            await _storageService.DownloadFileAsync(fileName, content);
+
+        }
+
+        public async Task ImportTransactionAsync()
+        {
+            try
+            {
+                Console.WriteLine("[AccountService] Importing JSON...");
+                var json = await _storageService.ReadFileAsync(); //Läser filen via StorageService
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    Console.WriteLine("[AccountService] No file content read.");
+                    return;
+                }
+
+                var importData = JsonSerializer.Deserialize<ImportedAccountData>(json); // Deserialized JSON till C# obj
+                if (importData == null)
+                {
+                    Console.WriteLine("[AccountService] Failed to deserialize JSON.");
+                    return;
+                }
+
+                var newAccount = new BankAccount(
+                    importData.Name,
+                    (AccountType)importData.AccountType,
+                    (Currency)importData.Currency,
+                    importData.Balance
+                );
+
+                foreach (var t in importData.Transactions)
+                {
+                    newAccount.Transactions.Add(new Transaction
+                    {
+                        Id = t.Id,
+                        TimeStamp = t.TimeStamp,
+                        Amount = t.Amount,
+                        transactionType = (TransactionType)t.transactionType,
+                        BalanceAfterTransaction = t.BalanceAfterTransaction,
+                        FromAccountId = t.FromAccount,
+                        ToAccountId = t.ToAccount,
+                        Currency = (Currency)t.Currency
+                    });
+                }
+
+                _accounts.Add(newAccount);
+                await SaveAsync();
+
+                Console.WriteLine($"[AccountService] ✅ Imported account '{newAccount.Name}' with {newAccount.Transactions.Count} transactions.");
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[AccountService] ❌ Error importing: {ex.Message}");
+            }
+        }
+
     }
 }

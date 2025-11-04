@@ -44,6 +44,16 @@ namespace BlazorApp4.Services
             return value ?? string.Empty;
         }
 
+        public async Task DownloadFileAsync(string fileName, string content)
+        {
+            await _jsRuntime.InvokeVoidAsync("downloadFileFromContent", fileName, content);
+        }
+
+        public async Task<string> ReadFileAsync()
+        {
+            return await _jsRuntime.InvokeAsync<string>("readFileContent");
+        }
+
 
     }
 }

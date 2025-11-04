@@ -12,6 +12,40 @@
     <link href="BlazorApp4.styles.css" rel="stylesheet" />
 </head>
 
+<script>
+    window.downloadFileFromContent = (fileName, content) => {
+        const blob = new Blob([content], { type: 'application/json' }); //Skapar en blob (En fil i mittet) frn JSOn texten
+        const link = document.createElement('a'); // Skapar temp download länk
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        link.click(); // Webläsaren laddar ner filen
+        URL.revokeObjectURL(link.href); // Tar bort temp länken
+    };
+</script>
+
+<script>
+    window.readFileContent = async () => {
+        return new Promise((resolve, reject) => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) {
+                    reject('No file selected');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+                reader.readAsText(file);
+            };
+            input.click();
+        });
+    };
+</script>
+
+
 <body>
     <div id="app">
         <svg class="loading-progress">

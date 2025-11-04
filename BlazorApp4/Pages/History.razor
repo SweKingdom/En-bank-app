@@ -72,6 +72,16 @@ else
             }
         </tbody>
     </table>
+    @if (_selectedAccount != null)
+    {
+        <button class="btn btn-primary mt-3" @onclick="ExportTransactions">
+            Export Transactions to JSON
+        </button>
+        <button class="btn btn-secondary mt-3" @onclick="ImportTransactions">
+            Import Transactions from JSON
+        </button>
+    }
+
 }
 
 <!-- Code for design -->
@@ -171,4 +181,25 @@ else
         };
         return sortedList;
     }
+
+    private async Task ExportTransactions()
+    {
+        if (_selectedAccount != null)
+        {
+            Console.WriteLine($"[TransactionHistory] Exporting {_selectedAccount.Name}");
+            await AccountService.ExportTransactionsAsync(_selectedAccount.Id);
+        }
+    }
+
+    private async Task ImportTransactions()
+    {
+        Console.WriteLine("[TransactionHistory] Importing JSON...");
+        await AccountService.ImportTransactionAsync();
+
+        await AccountService.EnsureLoadedAsync();
+        _accounts = AccountService.GetAccounts();
+        StateHasChanged();
+    }
+
+
 }
