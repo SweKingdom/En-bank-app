@@ -134,6 +134,36 @@ namespace BlazorApp4.Services
             await SaveAsync();
         }
 
+
+        public async Task DepositAsync(Guid accountId, decimal amount)
+        {
+            var account = _accounts.FirstOrDefault(a => a.Id == accountId)
+                ?? throw new KeyNotFoundException($"Account with ID {accountId} not found.");
+            if (amount <= 0)
+                throw new ArgumentOutOfRangeException(nameof(amount), "Amount must be positive.");
+
+            account.Deposit(amount);
+            await SaveAsync();
+            Console.WriteLine($"[AccountService] Deposit: {amount} to {account.Name}");
+        }
+
+        public async Task WithdrawAsync(Guid accountId, decimal amount)
+        {
+            var account = _accounts.FirstOrDefault(a => a.Id == accountId)
+                ?? throw new KeyNotFoundException($"Account with ID {accountId} not found.");
+            if (amount <= 0)
+                throw new ArgumentOutOfRangeException(nameof(amount), "Amount must be positive.");
+            if (account.Balance < amount)
+                throw new InvalidOperationException("Insufficient balance.");
+
+            account.Withdraw(amount);
+            await SaveAsync();
+            Console.WriteLine($"[AccountService] Withdraw: {amount} from {account.Name}");
+        }
+
+
+
+
         public async Task ApplyInterestToSavingsAccounts()
         {
             foreach (var account in _accounts.Where(a => a.AccountType == AccountType.Savings))
@@ -171,7 +201,7 @@ namespace BlazorApp4.Services
             var account = _accounts.FirstOrDefault(a => a.Id == accountId);
             if (account == null)
             {
-                Console.WriteLine($"[AccountService] X Account {accountId} not found");
+                Console.WriteLine($"[AccountService] Account {accountId} not found");
                 return;
             }
 
@@ -210,7 +240,7 @@ namespace BlazorApp4.Services
         {
             try
             {
-                Console.WriteLine("[AccountService] Importing JSON...");
+                Console.WriteLine("[AccountService] Importing JSON");
                 var json = await _storageService.ReadFileAsync(); //Läser filen via StorageService
                 if (string.IsNullOrWhiteSpace(json))
                 {
@@ -252,12 +282,12 @@ namespace BlazorApp4.Services
                 _accounts.Add(newAccount);
                 await SaveAsync();
 
-                Console.WriteLine($"[AccountService] ✅ Imported account '{newAccount.Name}' with {newAccount.Transactions.Count} transactions.");
+                Console.WriteLine($"[AccountService] Imported account '{newAccount.Name}' with {newAccount.Transactions.Count} transactions.");
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[AccountService] ❌ Error importing: {ex.Message}");
+                Console.WriteLine($"[AccountService] Error importing: {ex.Message}");
             }
         }
 
