@@ -26,6 +26,45 @@ else
         </InputSelect>
     </div>
 
+    <!-- Filter -->
+    <div class="mb-3">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label>From date</label>
+                <InputDate @bind-Value="fromDate" class="form-control" />
+            </div>
+
+            <div class="col-md-3">
+                <label>To date</label>
+                <InputDate @bind-Value="toDate" class="form-control" />
+            </div>
+
+            <div class="col-md-3">
+                <label>Min amount</label>
+                <InputNumber @bind-Value="minAmount" class="form-control" />
+            </div>
+
+            <div class="col-md-3">
+                <label>Max amount</label>
+                <InputNumber @bind-Value="maxAmount" class="form-control" />
+            </div>
+
+            <div class="col-md-3">
+                <label>Transaction type</label>
+                <InputSelect @bind-Value="selectedType" class="form-select">
+                    <option value="">All types</option>
+                    @foreach (var type in Enum.GetValues<TransactionType>())
+                    {
+                        <option value="@type">@type</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn-secondary mt-2" @onclick="ClearFilters">Clear filters</button>
+
+
     <!-- Sortbutton (date/amount) -->
     <div class="mb-2">
         <button class="btn btn-sm" @onclick="() => SetSort(SortKey.Date)">
@@ -93,6 +132,15 @@ else
     private SortKey currentKey = SortKey.Date;
     private bool descending = true;
 
+
+    // Filter variables
+    private DateTime? fromDate;
+    private DateTime? toDate;
+    private decimal? minAmount;
+    private decimal? maxAmount;
+    private string? selectedType;
+
+
     /// <summary>
     /// Sorting options for transaction list
     /// </summary>
@@ -118,6 +166,16 @@ else
             descending = true;
         }
     }
+
+    private void ClearFilters()
+    {
+        fromDate = null;
+        toDate = null;
+        minAmount = null;
+        maxAmount = null;
+        selectedType = null;
+    }
+
 
     /// <summary>
     /// Property for binding the selected accounts ID in the dropdown
@@ -169,17 +227,40 @@ else
             return Enumerable.Empty<Transaction>();
 
         // Sorts enummerable on date and amount
-        var sortedList = _selectedAccount.Transactions.AsEnumerable();
-        sortedList = currentKey switch
+        var filteredList = _selectedAccount.Transactions.AsEnumerable();
+
+        if (fromDate.HasValue)
+            filteredList = filteredList.Where(t => t.TimeStamp.Date >= fromDate.Value.Date);
+
+        if (toDate.HasValue)
+            filteredList = filteredList.Where(t => t.TimeStamp.Date <= toDate.Value.Date);
+
+        // 🔹 Filter: Beloppsintervall
+        if (minAmount.HasValue)
+            filteredList = filteredList.Where(t => t.Amount >= minAmount.Value);
+
+        if (maxAmount.HasValue)
+            filteredList = filteredList.Where(t => t.Amount <= maxAmount.Value);
+
+
+        // 🔹 Filter: Transaktionstyp
+        if (!string.IsNullOrEmpty(selectedType) &&
+            Enum.TryParse<TransactionType>(selectedType, out var parsedType))
+        {
+            filteredList = filteredList.Where(t => t.transactionType == parsedType);
+        }
+
+
+        filteredList = currentKey switch
         {
             SortKey.Amount => (descending
-                ? sortedList.OrderByDescending(transaction => transaction.Amount)
-            : sortedList.OrderBy(transaction => transaction.Amount)),
+            ? filteredList.OrderByDescending(transaction => transaction.Amount)
+            : filteredList.OrderBy(transaction => transaction.Amount)),
             SortKey.Date => (descending
-                ? sortedList.OrderByDescending(transaction => transaction.TimeStamp)
-                : sortedList.OrderBy(transaction => transaction.TimeStamp))
+                ? filteredList.OrderByDescending(transaction => transaction.TimeStamp)
+                : filteredList.OrderBy(transaction => transaction.TimeStamp))
         };
-        return sortedList;
+        return filteredList;
     }
 
     private async Task ExportTransactions()

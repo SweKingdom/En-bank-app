@@ -27,7 +27,5 @@ public enum AccountType
 /// </summary>
 public enum Currency
 {
-    SEK,
-    Euro,
-    USD
+    SEK
 }
