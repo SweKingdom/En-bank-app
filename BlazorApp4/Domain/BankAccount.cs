@@ -24,13 +24,13 @@ namespace BlazorApp4.Domain
 
 
         // Constructor
-        public BankAccount(string name, AccountType accountType, Currency currency, decimal initialBalance)
+        public BankAccount(string name, AccountType accountType, Currency currency, decimal initialBalance, DateTime? lastUpdated = null)
         {
             Name = name;
             AccountType = accountType;
             Currency = currency;
             Balance = initialBalance;
-            LastUpdated = DateTime.Now;
+            LastUpdated = lastUpdated ?? DateTime.Now;
         }
 
         [JsonConstructor]

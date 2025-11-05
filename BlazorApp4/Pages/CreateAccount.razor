@@ -67,7 +67,7 @@ else
     </ul>
 }
 
-<button class="btn btn-success mb-3" @onclick="ApplyInterestAsync">Applicera ränta på sparkonton</button>
+<button class="btn btn-warning mb-3" @onclick="SimulateDayPassedAsync">Simulera 1 dag</button>
 
 
 @code {
@@ -162,12 +162,20 @@ else
         }
     }
 
-    private async Task ApplyInterestAsync()
+    private async Task SimulateDayPassedAsync()
     {
+        foreach (var account in _accounts)
+        {
+            // Flytta fram "LastUpdated" ett dygn bakåt, så ApplyInterest märker att 1 dag gått
+            account.GetType().GetProperty("LastUpdated")!
+                .SetValue(account, account.LastUpdated.AddDays(-1));
+        }
+
         await AccountService.ApplyInterestToSavingsAccounts();
         _accounts = AccountService.GetAccounts();
         StateHasChanged();
     }
+
 
 
 
