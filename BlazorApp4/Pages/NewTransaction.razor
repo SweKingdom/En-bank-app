@@ -62,6 +62,85 @@ else
         </div>
     </EditForm>
 
+
+
+    <h3 class="mt-4 mb-3">Withdraw & Deposit</h3>
+    @if (_accounts.Count < 1)
+    {
+        <p>Skapa minst ett konto för att göra en transaktion</p>
+    }
+    else
+    {
+        <!-- Withdraw -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card shadow-sm p-4 mb-4" style="max-width: 400px;">
+                    <h5 class="mb-3">Withdraw</h5>
+
+                    <EditForm Model="_withdrawModel" OnValidSubmit="OnWithdrawAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger mb-3" />
+
+                        <div class="mb-3">
+                            <label class="form-label">Withdraw from</label>
+                            <InputSelect TValue="Guid"
+                                         @bind-Value="_withdrawModel.FromAccountId"
+                                         class="form-select"
+                                         @onchange="HandleFormChanged">
+                                <option value="@Guid.Empty">Choose Account</option>
+                                @foreach (var account in _accounts)
+                                {
+                                    <option value="@account.Id">@account.Name (@account.Balance.ToString("N2") @account.Currency)</option>
+                                }
+                            </InputSelect>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Amount</label>
+                            <InputNumber TValue="decimal" @bind-Value="_withdrawModel.Amount" class="form-control" min="0.01" step="0.01" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Complete Withdrawal</button>
+                    </EditForm>
+                </div>
+            </div>
+
+            <!-- Deposit -->
+            <div class="col-md-6">
+                <div class="card shadow-sm p-4 mb-4" style="max-width: 400px;">
+                    <h5 class="mb-3">Deposit</h5>
+
+                    <EditForm Model="_depositModel" OnValidSubmit="OnDepositAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger mb-3" />
+
+                        <div class="mb-3">
+                            <label class="form-label">Deposit to</label>
+                            <InputSelect TValue="Guid"
+                                         @bind-Value="_depositModel.ToAccountId"
+                                         class="form-select"
+                                         @onchange="HandleFormChanged">
+                                <option value="@Guid.Empty">Choose Account</option>
+                                @foreach (var account in _accounts)
+                                {
+                                    <option value="@account.Id">@account.Name (@account.Balance.ToString("N2") @account.Currency)</option>
+                                }
+                            </InputSelect>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Amount</label>
+                            <InputNumber TValue="decimal" @bind-Value="_depositModel.Amount" class="form-control" min="0.01" step="0.01" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Complete Deposit</button>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    }
+
+
     <!-- Account overwiev -->
     <div>
         <h3 class="mb-3">All accounts</h3>
@@ -85,6 +164,8 @@ else
     private readonly TransferFormModel _model = new();
     private List<BankAccount> _accounts = new();
     private List<BankAccount> _toAccounts = new();
+    private readonly WithdrawModel _withdrawModel = new();
+    private readonly DepositModel _depositModel = new();
 
     /// <summary>
     /// Represent the transfer form field
@@ -93,6 +174,24 @@ else
     {
         public Guid FromAccountId { get; set; }
         public Guid ToAccountId { get; set; }
+        public decimal Amount { get; set; }
+    }
+
+    /// <summary>
+    /// Model for the deposit transaction
+    /// </summary>
+    private class DepositModel
+    {
+        public Guid ToAccountId { get; set; }
+        public decimal Amount { get; set; }
+    }
+
+    /// <summary>
+    /// Model for the withdrawal transaction
+    /// </summary>
+    private class WithdrawModel
+    {
+        public Guid FromAccountId { get; set; }
         public decimal Amount { get; set; }
     }
 
@@ -173,6 +272,37 @@ else
             _toAccounts = _accounts.ToList();
         }
         _model.ToAccountId = Guid.Empty;
+    }
+
+    private async Task OnWithdrawAsync()
+    {
+        try
+        {
+            await AccountService.WithdrawAsync(_withdrawModel.FromAccountId, _withdrawModel.Amount);
+            _accounts = AccountService.GetAccounts();
+            _withdrawModel.Amount = 0;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+
+    private async Task OnDepositAsync()
+    {
+        try
+        {
+            await AccountService.DepositAsync(_depositModel.ToAccountId, _depositModel.Amount);
+            _accounts = AccountService.GetAccounts();
+            _depositModel.Amount = 0;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
     }
 }
 

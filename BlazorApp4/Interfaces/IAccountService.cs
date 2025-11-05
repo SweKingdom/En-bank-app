@@ -10,6 +10,11 @@ namespace BlazorApp4.Interfaces
         Task UpdateAccount(BankAccount updatedAccount);
 
         Task Transfer(Guid fromAccountId, Guid toAccountId, decimal amount);
+
+        Task DepositAsync(Guid accountId, decimal amount);
+
+        Task WithdrawAsync(Guid accountId, decimal amount);
+
         Task EnsureLoadedAsync();
         Task ApplyInterestToSavingsAccounts();
 
