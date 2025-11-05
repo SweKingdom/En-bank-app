@@ -34,6 +34,9 @@ namespace BlazorApp4.Services
                 return;
             }
             await IsInitialized();
+
+            await AutoApplyDailyInterestAsync();
+
             isLoaded = true;
         }
 
@@ -45,7 +48,6 @@ namespace BlazorApp4.Services
             var fromStorage = await _storageService.GetItemAsync<List<BankAccount>>(StorageKey);
             if (fromStorage is { Count: > 0 })
                 _accounts.AddRange(fromStorage);
-            isLoaded = true;
         }
         /// <summary>
         /// Saves current account list to storage
@@ -142,6 +144,23 @@ namespace BlazorApp4.Services
             await SaveAsync();
         }
 
+        public async Task AutoApplyDailyInterestAsync()
+        {
+            foreach (var account in _accounts.Where(a => a.AccountType == AccountType.Savings))
+            {
+                Console.WriteLine($"Kontrollerar ränta {account}, dagar sedan uppdatering: {(DateTime.Now - account.LastUpdated).Days}");
+
+                var daysElapsed = (DateTime.Now - account.LastUpdated).Days;
+                if (daysElapsed > 0)
+                {
+                    account.ApplyInterest();
+                }
+            }
+
+            await SaveAsync();
+        }
+
+
         public Task<bool> ValidatePinAsync(string pin) => Task.FromResult(pin == CorrectPin);
 
 
@@ -163,6 +182,7 @@ namespace BlazorApp4.Services
                 account.AccountType,
                 account.Currency,
                 account.Balance,
+                account.LastUpdated,
                 Transactions = account.Transactions.Select(t => new
                 {
                     t.TimeStamp,
@@ -206,10 +226,12 @@ namespace BlazorApp4.Services
                 }
 
                 var newAccount = new BankAccount(
+                    importData.Id == Guid.Empty ? Guid.NewGuid() : importData.Id,
                     importData.Name,
                     (AccountType)importData.AccountType,
                     (Currency)importData.Currency,
-                    importData.Balance
+                    importData.Balance,
+                    importData.LastUpdated
                 );
 
                 foreach (var t in importData.Transactions)
