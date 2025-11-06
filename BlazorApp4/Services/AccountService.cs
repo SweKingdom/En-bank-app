@@ -9,7 +9,6 @@ namespace BlazorApp4.Services
     /// </summary>
     public class AccountService : IAccountService
     {
-        
         /// Private fields and lists
         private const string StorageKey = "BlazorApp4.accounts";
         private readonly List<BankAccount> _accounts = new();
@@ -21,7 +20,6 @@ namespace BlazorApp4.Services
         public AccountService(IStorageService storageService)
         {
             _storageService = storageService;
-
         }
 
         /// <summary>
@@ -34,9 +32,7 @@ namespace BlazorApp4.Services
                 return;
             }
             await IsInitialized();
-
             await AutoApplyDailyInterestAsync();
-
             isLoaded = true;
         }
 
@@ -49,6 +45,7 @@ namespace BlazorApp4.Services
             if (fromStorage is { Count: > 0 })
                 _accounts.AddRange(fromStorage);
         }
+
         /// <summary>
         /// Saves current account list to storage
         /// </summary>
@@ -58,8 +55,8 @@ namespace BlazorApp4.Services
         /// Creates and saves accounts with given parameters
         /// </summary>
         /// <param name="name">Account name</param>
-        /// <param name="accountType">Tyoe of account, savings... deposit</param>
-        /// <param name="currency">What curency used, sek default</param>
+        /// <param name="accountType">Type of account, savings, deposit</param>
+        /// <param name="currency">What curency used, SEK</param>
         /// <param name="initialBalance">Account balance upon created</param>
         /// <returns>Returns created instans of bankaccount</returns>
         public async Task<BankAccount> CreateAccount(string name, AccountType accountType, Currency currency, decimal initialBalance)
@@ -124,29 +121,40 @@ namespace BlazorApp4.Services
             ?? throw new KeyNotFoundException($"Account with ID {fromAccountId} not found.");
             var toAccount = _accounts.OfType<BankAccount>().FirstOrDefault(a => a.Id == toAccountId)
             ?? throw new KeyNotFoundException($"Account with ID {toAccountId} not found.");
-
             if (fromAccount.Balance < amount)
-                throw new InvalidOperationException("Otillräckliga medel på från-kontot.");
+                throw new InvalidOperationException("Insuficcent founds on from-account.");
             if (amount <= 0)
-                throw new ArgumentOutOfRangeException(nameof(amount), "Beloppet måste vara positivt.");
+                throw new ArgumentOutOfRangeException(nameof(amount), "Amount must be positive.");
             fromAccount.TransferTo(toAccount, amount);
-
             await SaveAsync();
         }
 
-
+        /// <summary>
+        /// Deposits a specified amount into an account
+        /// </summary>
+        /// <param name="accountId">Unique account ID</param>
+        /// <param name="amount">Amount depositid in to account</param>
+        /// <exception cref="KeyNotFoundException">Unable to find Account ID</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Amount must be positive when depositing</exception>
         public async Task DepositAsync(Guid accountId, decimal amount)
         {
             var account = _accounts.FirstOrDefault(a => a.Id == accountId)
                 ?? throw new KeyNotFoundException($"Account with ID {accountId} not found.");
             if (amount <= 0)
                 throw new ArgumentOutOfRangeException(nameof(amount), "Amount must be positive.");
-
             account.Deposit(amount);
             await SaveAsync();
             Console.WriteLine($"[AccountService] Deposit: {amount} to {account.Name}");
         }
 
+        /// <summary>
+        /// Withdraws a specified amount from an account
+        /// </summary>
+        /// <param name="accountId">Unique account ID</param>
+        /// <param name="amount">Amount withdrawn from account</param>
+        /// <exception cref="KeyNotFoundException">Unable to find Account ID</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Amount when withdrawn must be positive</exception>
+        /// <exception cref="InvalidOperationException">Insufficent balance when withdrawing amount</exception>
         public async Task WithdrawAsync(Guid accountId, decimal amount)
         {
             var account = _accounts.FirstOrDefault(a => a.Id == accountId)
@@ -155,56 +163,60 @@ namespace BlazorApp4.Services
                 throw new ArgumentOutOfRangeException(nameof(amount), "Amount must be positive.");
             if (account.Balance < amount)
                 throw new InvalidOperationException("Insufficient balance.");
-
             account.Withdraw(amount);
             await SaveAsync();
             Console.WriteLine($"[AccountService] Withdraw: {amount} from {account.Name}");
         }
 
-
-
-
+        /// <summary>
+        /// Applies interest to all savings accounts
+        /// </summary>
         public async Task ApplyInterestToSavingsAccounts()
         {
             foreach (var account in _accounts.Where(a => a.AccountType == AccountType.Savings))
             {
                 account.ApplyInterest();
             }
-
             await SaveAsync();
         }
 
+        /// <summary>
+        /// Automatically applies daily interest if days have passed since last update
+        /// </summary>
         public async Task AutoApplyDailyInterestAsync()
         {
             foreach (var account in _accounts.Where(a => a.AccountType == AccountType.Savings))
             {
-                Console.WriteLine($"Kontrollerar ränta {account}, dagar sedan uppdatering: {(DateTime.Now - account.LastUpdated).Days}");
-
+                Console.WriteLine($"Checks interest from {account}, days since last update: {(DateTime.Now - account.LastUpdated).Days}");
                 var daysElapsed = (DateTime.Now - account.LastUpdated).Days;
                 if (daysElapsed > 0)
                 {
                     account.ApplyInterest();
                 }
             }
-
             await SaveAsync();
         }
 
-
+        /// <summary>
+        /// Validates a user PIN asynchronously
+        /// </summary>
+        /// <param name="pin">PIN to validate</param>
+        /// <returns>True if valid, otherwise false</returns>
         public Task<bool> ValidatePinAsync(string pin) => Task.FromResult(pin == CorrectPin);
 
-
+        /// <summary>
+        /// Exports all transactions of a specific account to a JSON file
+        /// </summary>
+        /// <param name="accountId">Unique account ID</param>
         public async Task ExportTransactionsAsync(Guid accountId)
         {
             await EnsureLoadedAsync();
-
             var account = _accounts.FirstOrDefault(a => a.Id == accountId);
             if (account == null)
             {
                 Console.WriteLine($"[AccountService] Account {accountId} not found");
                 return;
             }
-
             var exportData = new // Format på filen
             {
                 account.Id,
@@ -224,37 +236,43 @@ namespace BlazorApp4.Services
                     t.Currency
                 })
             };
-            var json = JsonSerializer.Serialize(exportData, new JsonSerializerOptions// Converts C# obj -> JSON sting
+            var json = JsonSerializer.Serialize(exportData, new JsonSerializerOptions// Converts C# obj -> JSON string
             {
                 WriteIndented = true
             });
-            await _storageService.DownloadFileAsync($"{account.Name}_transactions.json", json); //Nedladdning
+            await _storageService.DownloadFileAsync($"{account.Name}_transactions.json", json); // Downloading
         }
+
+        /// <summary>
+        /// Downloads a file using the storage service
+        /// </summary>
+        /// <param name="fileName">File name downloaded</param>
+        /// <param name="content">content in file</param>
         public async Task DownloadFileAsync(string fileName, string content)
         {
             await _storageService.DownloadFileAsync(fileName, content);
-
         }
 
+        /// <summary>
+        /// Imports transactions from a JSON file and adds a new account
+        /// </summary>
         public async Task ImportTransactionAsync()
         {
             try
             {
                 Console.WriteLine("[AccountService] Importing JSON");
-                var json = await _storageService.ReadFileAsync(); //Läser filen via StorageService
+                var json = await _storageService.ReadFileAsync(); // Reads file through StorageService
                 if (string.IsNullOrWhiteSpace(json))
                 {
                     Console.WriteLine("[AccountService] No file content read.");
                     return;
                 }
-
-                var importData = JsonSerializer.Deserialize<ImportedAccountData>(json); // Deserialized JSON till C# obj
+                var importData = JsonSerializer.Deserialize<ImportedAccountData>(json); // Deserialized JSON to C# obj
                 if (importData == null)
                 {
                     Console.WriteLine("[AccountService] Failed to deserialize JSON.");
                     return;
                 }
-
                 var newAccount = new BankAccount(
                     importData.Id == Guid.Empty ? Guid.NewGuid() : importData.Id,
                     importData.Name,
@@ -263,7 +281,6 @@ namespace BlazorApp4.Services
                     importData.Balance,
                     importData.LastUpdated
                 );
-
                 foreach (var t in importData.Transactions)
                 {
                     newAccount.Transactions.Add(new Transaction
@@ -278,18 +295,14 @@ namespace BlazorApp4.Services
                         Currency = (Currency)t.Currency
                     });
                 }
-
                 _accounts.Add(newAccount);
                 await SaveAsync();
-
                 Console.WriteLine($"[AccountService] Imported account '{newAccount.Name}' with {newAccount.Transactions.Count} transactions.");
-
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[AccountService] Error importing: {ex.Message}");
             }
         }
-
     }
 }

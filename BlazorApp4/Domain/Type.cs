@@ -1,6 +1,5 @@
 ﻿namespace BlazorApp4.Domain;
 
-
 /// <summary>
 /// The different types of transactions
 /// </summary>
@@ -23,7 +22,7 @@ public enum AccountType
 }
 
 /// <summary>
-/// The different value types
+/// The different Currency types
 /// </summary>
 public enum Currency
 {

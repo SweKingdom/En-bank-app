@@ -2,6 +2,14 @@
 @inject NavigationManager Navigation
 
 @code {
+    /// <summary>
+    /// Called automatically when the component is first initialized.
+    /// Immediately redirects the user to the Home page.
+    /// Navigate to the "/home" route right when the root ("/") page loads.
+    /// The 'replace: true' ensures that this redirection replaces the current
+    /// entry in the browser history, preventing the user from going "back"
+    /// to the empty root page
+    /// </summary>
     protected override void OnInitialized()
     {
         Navigation.NavigateTo("/home", replace: true);

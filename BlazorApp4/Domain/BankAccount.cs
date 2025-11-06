@@ -21,8 +21,6 @@ namespace BlazorApp4.Domain
         private const decimal DefaultInterestRate = 0.02m; // 2% per år
         public decimal InterestRate { get; private set; } = DefaultInterestRate;
 
-
-
         // Constructor
         public BankAccount(string name, AccountType accountType, Currency currency, decimal initialBalance, DateTime? lastUpdated = null)
         {
@@ -42,7 +40,6 @@ namespace BlazorApp4.Domain
             Currency = currency;
             Balance = balance;
             LastUpdated = lastUpdated;
-
             if (transactions != null)
                 _transaction = transactions;
         }
@@ -88,10 +85,9 @@ namespace BlazorApp4.Domain
         /// <exception cref="ArgumentException"></exception>
         public void Deposit(decimal amount)
         {
-            if (amount < 0) throw new ArgumentException("Beloppet måste vara större än 0!");
+            if (amount < 0) throw new ArgumentException("Amount must be greater then 0!");
             Balance += amount;
             LastUpdated = DateTime.Now;
-
             _transaction.Add(new Transaction
             {
                 transactionType = TransactionType.Deposit,
@@ -108,12 +104,10 @@ namespace BlazorApp4.Domain
         /// <exception cref="InvalidOperationException">Cant have a negative balance</exception>
         public void Withdraw(decimal amount)
         {
-            if (amount < 0) throw new ArgumentException("Beloppet måste vara större än 0!");
-
-            if (Balance < amount) throw new InvalidOperationException("Inte tillräckligt saldo!");
+            if (amount < 0) throw new ArgumentException("Amount must be greater then 0!");
+            if (Balance < amount) throw new InvalidOperationException("Insuficent balance");
             Balance -= amount;
             LastUpdated = DateTime.Now;
-
             _transaction.Add(new Transaction
             {
                 transactionType = TransactionType.Withdraw,
@@ -122,6 +116,9 @@ namespace BlazorApp4.Domain
             });
         }
 
+        /// <summary>
+        /// Calculates daily interest and applies if savings account
+        /// </summary>
         public void ApplyInterest()
         {
             if (AccountType != AccountType.Savings)
@@ -130,12 +127,8 @@ namespace BlazorApp4.Domain
             if (daysElapsed <= 0) return;
             decimal dailyRate = InterestRate / 365m;
             decimal interestAmount = Balance * dailyRate * daysElapsed;
-
-            if (interestAmount <= 0) return;
-
             Balance += Math.Round(interestAmount, 2);
             LastUpdated = DateTime.Now;
-
             _transaction.Add(new Transaction
             {
                 transactionType = TransactionType.Interest,

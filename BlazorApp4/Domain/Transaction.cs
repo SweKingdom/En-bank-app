@@ -2,7 +2,6 @@
 
 namespace BlazorApp4.Domain
 {
-
     /// <summary>
     /// Transaction domain, manages transactions, their types, time, account ID and curencys
     /// </summary>
@@ -16,8 +15,5 @@ namespace BlazorApp4.Domain
         public decimal BalanceAfterTransaction { get; set; }
         public Guid? FromAccountId { get; set; }
         public Guid? ToAccountId { get; set; }
-
-
-
     }
 }

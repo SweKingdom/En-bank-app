@@ -4,62 +4,66 @@
 @inject NavigationManager Navigation
 
 <!-- Create account form -->
-<h3>Vänligen skapa ett konto</h3>
+<h3>Please create a account</h3>
 <EditForm Model="_model" OnValidSubmit="CreateAccountAsync">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
     <!-- Account name -->
     <div>
-        <label>Kontonamn</label>
+        <label>Account name</label>
         <InputText @bind-Value="_model.Name" />
     </div>
 
     <!-- Account type -->
     <div>
-        <label>Kontotyp</label>
+        <label>Account type</label>
         <InputSelect @bind-Value="_model.AccountType">
-            <option value="">Välj kontotyp!</option>
-            <option value="@AccountType.Deposit">Baskonto</option>
-            <option value="@AccountType.Savings">Sparkonto</option>
+            <option value="">Chose account type!</option>
+            <option value="@AccountType.Deposit">Debit account</option>
+            <option value="@AccountType.Savings">Savings account</option>
         </InputSelect>
     </div>
 
     <!-- Curency -->
     <div>
-        <label>Valuta</label>
+        <label>Currency</label>
         <InputSelect @bind-Value="_model.Currency">
-            <option value="">Välj valuta!</option>
+            <option value="">Chose currency!</option>
 
             <option value="@Currency.SEK">SEK</option>
 
         </InputSelect>
     </div>
 
-    <!-- Inital amount -->
+    <!-- Inital balance -->
     <div>
-        <label>Start saldo</label>
+        <label>Initial balance</label>
         <InputNumber @bind-Value="_model.InitialBalance" />
     </div>
-    <button type="submit">Skapa</button>
+
+    <!-- Submit button -->
+    <button type="submit">Create</button>
 </EditForm>
 
 <!-- Show accounts -->
-<h4>Alla konton</h4>
+<h4>All accounts</h4>
 @if(_accounts.Count == 0)
 {
-    <p>Det finns inga konton ännu, registera ditt första konto!</p>
+    <p>There are no accounts yet, create your first account!</p>
 }
 else
 {
+    <!-- Account list -->
     <ul lass="list-group">
         @foreach(var account in _accounts)
         {
             <li class="list-group-item d-flex justify-content-between align-items-center">
                 <div>
                     <strong>@account.Name</strong> - @account.AccountType - @account.Balance - @account.Currency
-                    <small>(uppdaterad @account.LastUpdated.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"))</small>
+                    <small>(uppdating @account.LastUpdated.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"))</small>
                 </div>
+                
                 <!-- Remove account button -->
                 <button class="btn btn-danger btn-sm" @onclick="() => DeleteAccountAsync(account.Id)">Delete </button>
             </li>
@@ -67,7 +71,8 @@ else
     </ul>
 }
 
-<button class="btn btn-warning mb-3" @onclick="SimulateDayPassedAsync">Simulera 1 dag</button>
+<!-- Simulate day passing for interest -->
+<button class="btn btn-warning mb-3" @onclick="SimulateDayPassedAsync">Simulate 1 day of interest</button>
 
 
 @code {
@@ -77,6 +82,7 @@ else
 
     /// <summary>
     /// Ensures accounts are loaded from the service, called when component is initialized
+    /// Redirects to the home page if not logged in
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
@@ -97,7 +103,6 @@ else
         try
         {
             Console.WriteLine(_model.Name);
-
             await AccountService.CreateAccount(
                 _model.Name,
                 _model.AccountType,
@@ -110,7 +115,6 @@ else
             //Resets form field
             _model.Clear();
         }
-
         catch (Exception exception)
         {
             Console.WriteLine(exception);
@@ -124,19 +128,18 @@ else
     /// <param name="Id">ID of account</param>
     private async Task DeleteAccountAsync(Guid Id)
     {
-        bool confirm = await JS.InvokeAsync<bool>("confirm", $"Vill du verkligen ta bort kontot?");
+        bool confirm = await JS.InvokeAsync<bool>("confirm", $"Are you sure you want to remove this account?");
         if (!confirm)
             return;
-
         try
         {
             await AccountService.DeleteAccount(Id);
-            _accounts = AccountService.GetAccounts(); // uppdaterar listan
-            StateHasChanged(); // uppdaterar UI
+            _accounts = AccountService.GetAccounts(); // Updating list
+            StateHasChanged(); // Updating UI
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Fel vid borttagning av konto: {ex.Message}");
+            Console.WriteLine($"Error when removing account: {ex.Message}");
         }
     }
 
@@ -162,11 +165,13 @@ else
         }
     }
 
+    /// <summary>
+    /// Simulates a day passing to trigger interest updates for savings accounts
+    /// </summary>
     private async Task SimulateDayPassedAsync()
     {
         foreach (var account in _accounts)
         {
-            // Flytta fram "LastUpdated" ett dygn bakåt, så ApplyInterest märker att 1 dag gått
             account.GetType().GetProperty("LastUpdated")!
                 .SetValue(account, account.LastUpdated.AddDays(-1));
         }
