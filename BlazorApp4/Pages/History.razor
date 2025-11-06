@@ -211,6 +211,13 @@ else
             _selectedAccount = _accounts[0];
         }
         StateHasChanged();
+        AccountService.StateChanged += OnStateChanged;
+        AccountService.AutoApplyDailyInterest();
+    }
+
+    public void OnStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
     }
 
     /// <summary>

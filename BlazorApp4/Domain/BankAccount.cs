@@ -123,7 +123,7 @@ namespace BlazorApp4.Domain
         {
             if (AccountType != AccountType.Savings)
                 return;
-            var daysElapsed = (DateTime.Now - LastUpdated).Days;
+            var daysElapsed = (DateTime.Now - LastUpdated).Seconds;
             if (daysElapsed <= 0) return;
             decimal dailyRate = InterestRate / 365m;
             decimal interestAmount = Balance * dailyRate * daysElapsed;

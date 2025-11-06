@@ -7,14 +7,19 @@ namespace BlazorApp4.Services
     /// Services responsible for managing bankaccount and transactions
     /// Handels storage, retrival and uppdates of account data
     /// </summary>
-    public class AccountService : IAccountService
+    public class AccountService : IAccountService, IDisposable
     {
         /// Private fields and lists
         private const string StorageKey = "BlazorApp4.accounts";
         private readonly List<BankAccount> _accounts = new();
         private readonly IStorageService _storageService;
         private bool isLoaded;
+        private bool isRunning;
         private const string CorrectPin = "1234";
+
+        public event Action? StateChanged;
+        
+        public void NotifyEvent() => StateChanged?.Invoke();
 
         /// Constructor
         public AccountService(IStorageService storageService)
@@ -32,7 +37,6 @@ namespace BlazorApp4.Services
                 return;
             }
             await IsInitialized();
-            await AutoApplyDailyInterestAsync();
             isLoaded = true;
         }
 
@@ -183,19 +187,35 @@ namespace BlazorApp4.Services
         /// <summary>
         /// Automatically applies daily interest if days have passed since last update
         /// </summary>
-        public async Task AutoApplyDailyInterestAsync()
+        public async Task ApplyDailyInterestAsync()
         {
             foreach (var account in _accounts.Where(a => a.AccountType == AccountType.Savings))
             {
                 Console.WriteLine($"Checks interest from {account}, days since last update: {(DateTime.Now - account.LastUpdated).Days}");
-                var daysElapsed = (DateTime.Now - account.LastUpdated).Days;
+                var daysElapsed = (DateTime.Now - account.LastUpdated).Seconds;
                 if (daysElapsed > 0)
                 {
                     account.ApplyInterest();
                 }
             }
             await SaveAsync();
+            NotifyEvent();
         }
+
+        public void AutoApplyDailyInterest()
+        {
+            isRunning = true;
+            Task.Run(async () => {
+                while (isRunning == true)
+                {
+                    await Task.Delay(5000);
+                    await ApplyDailyInterestAsync();
+                    Console.WriteLine("1");
+                }
+            });
+        }
+
+
 
         /// <summary>
         /// Validates a user PIN asynchronously
@@ -303,6 +323,11 @@ namespace BlazorApp4.Services
             {
                 Console.WriteLine($"[AccountService] Error importing: {ex.Message}");
             }
+        }
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
         }
     }
 }

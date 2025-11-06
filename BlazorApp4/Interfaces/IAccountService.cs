@@ -83,5 +83,9 @@ namespace BlazorApp4.Interfaces
         /// Imports transactions from an external source into the system.
         /// </summary>
         Task ImportTransactionAsync();
+
+        event Action? StateChanged;
+
+        void AutoApplyDailyInterest();
     }
 }
