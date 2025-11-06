@@ -3,16 +3,20 @@
 @inject IAccountService AccountService
 @inject NavigationManager Navigation
 
+<!-- Main application layout, contains a nav menu and a top bar with logout functionality -->
 <div class="page">
+    <!-- Nav menu -->
     <div class="sidebar">
         <NavMenu />
     </div>
 
     <main>
+        <!-- Top bar with logout -->
         <div class="top-row px-4">
-            <button class="btn btn-link" @onclick="HandleLogout">Logga ut</button>
+            <button class="btn btn-link" @onclick="HandleLogout">Log out</button>
         </div>
 
+        <!-- Page content -->
         <article class="content px-4">
             @Body
         </article>
@@ -24,6 +28,10 @@
 @code {
     [Inject] private AppState AppState { get; set; } = default!;
 
+    /// <summary>
+    /// Handles user logout by resetting login state and navigating to the home page.
+    /// </summary>
+    /// <returns>A completed task.</returns> 
     private Task HandleLogout()
     {
         AppState.SetLoggedIn(false);

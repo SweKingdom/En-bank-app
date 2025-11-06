@@ -74,7 +74,6 @@ else
 <!-- Simulate day passing for interest -->
 <button class="btn btn-warning mb-3" @onclick="SimulateDayPassedAsync">Simulate 1 day of interest</button>
 
-
 @code {
     /// Private fields and models
     private CreateAccountModel _model = new(); // Holds form data for new account
@@ -175,16 +174,10 @@ else
             account.GetType().GetProperty("LastUpdated")!
                 .SetValue(account, account.LastUpdated.AddDays(-1));
         }
-
         await AccountService.ApplyInterestToSavingsAccounts();
         _accounts = AccountService.GetAccounts();
         StateHasChanged();
     }
 
-
-
-
-
     [Inject] private IJSRuntime JS { get; set; } = default!;
-
 }
