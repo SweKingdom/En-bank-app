@@ -1,5 +1,8 @@
 ﻿namespace BlazorApp4.Domain.DTOs
 {
+    /// <summary>
+    /// Data for an imported account, included its details and transactions
+    /// </summary>
     public class ImportedAccountData
     {
         public Guid Id { get; set; }

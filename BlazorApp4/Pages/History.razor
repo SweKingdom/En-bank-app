@@ -8,7 +8,7 @@
 
 @if (_accounts.Count == 0)
 {
-    <p>Inga konton finns.</p>
+    <p>No accounts excists.</p>
 }
 else
 {
@@ -33,22 +33,18 @@ else
                 <label>From date</label>
                 <InputDate @bind-Value="fromDate" class="form-control" />
             </div>
-
             <div class="col-md-3">
                 <label>To date</label>
                 <InputDate @bind-Value="toDate" class="form-control" />
             </div>
-
             <div class="col-md-3">
                 <label>Min amount</label>
                 <InputNumber @bind-Value="minAmount" class="form-control" />
             </div>
-
             <div class="col-md-3">
                 <label>Max amount</label>
                 <InputNumber @bind-Value="maxAmount" class="form-control" />
             </div>
-
             <div class="col-md-3">
                 <label>Transaction type</label>
                 <InputSelect @bind-Value="selectedType" class="form-select">
@@ -78,7 +74,7 @@ else
 
 @if (_selectedAccount == null)
 {
-    <p> Choose Account </p>
+    <p> Choose Account a account to view transactions </p>
 }
 else
 {
@@ -111,6 +107,8 @@ else
             }
         </tbody>
     </table>
+
+    <!-- Export import buttons -->
     @if (_selectedAccount != null)
     {
         <button class="btn btn-primary mt-3" @onclick="ExportTransactions">
@@ -120,7 +118,6 @@ else
             Import Transactions from JSON
         </button>
     }
-
 }
 
 <!-- Code for design -->
@@ -132,14 +129,12 @@ else
     private SortKey currentKey = SortKey.Date;
     private bool descending = true;
 
-
     // Filter variables
     private DateTime? fromDate;
     private DateTime? toDate;
     private decimal? minAmount;
     private decimal? maxAmount;
     private string? selectedType;
-
 
     /// <summary>
     /// Sorting options for transaction list
@@ -167,6 +162,9 @@ else
         }
     }
 
+    /// <summary>
+    /// Clears all active filters and resets view
+    /// </summary>
     private void ClearFilters()
     {
         fromDate = null;
@@ -175,7 +173,6 @@ else
         maxAmount = null;
         selectedType = null;
     }
-
 
     /// <summary>
     /// Property for binding the selected accounts ID in the dropdown
@@ -217,10 +214,9 @@ else
     }
 
     /// <summary>
-    /// Returns a sorted list of trasactions for the selected account
-    /// Sorting is depended on curent KeySort and order
+    /// Returns a filtered and sorted list of transactions for the selected account
     /// </summary>
-    /// <returns>Sorted and orderd Enumerable</returns>
+    /// <returns>Sorted and or orderd Enumerable</returns>
     private IEnumerable<Transaction> sortedTransaction()
     {
         if (_selectedAccount == null)
@@ -228,28 +224,23 @@ else
 
         // Sorts enummerable on date and amount
         var filteredList = _selectedAccount.Transactions.AsEnumerable();
-
         if (fromDate.HasValue)
             filteredList = filteredList.Where(t => t.TimeStamp.Date >= fromDate.Value.Date);
-
         if (toDate.HasValue)
             filteredList = filteredList.Where(t => t.TimeStamp.Date <= toDate.Value.Date);
 
-        // 🔹 Filter: Beloppsintervall
+        // Filter amount intervall
         if (minAmount.HasValue)
             filteredList = filteredList.Where(t => t.Amount >= minAmount.Value);
-
         if (maxAmount.HasValue)
             filteredList = filteredList.Where(t => t.Amount <= maxAmount.Value);
 
-
-        // 🔹 Filter: Transaktionstyp
+        // Filter Transaction type
         if (!string.IsNullOrEmpty(selectedType) &&
             Enum.TryParse<TransactionType>(selectedType, out var parsedType))
         {
             filteredList = filteredList.Where(t => t.transactionType == parsedType);
         }
-
 
         filteredList = currentKey switch
         {
@@ -263,6 +254,9 @@ else
         return filteredList;
     }
 
+    /// <summary>
+    /// Exports all transactions of the selected account to a JSON file
+    /// </summary>
     private async Task ExportTransactions()
     {
         if (_selectedAccount != null)
@@ -272,9 +266,12 @@ else
         }
     }
 
+    /// <summary>
+    /// Imports transactions from a JSON file and refreshes the account list
+    /// </summary>
     private async Task ImportTransactions()
     {
-        Console.WriteLine("[TransactionHistory] Importing JSON...");
+        Console.WriteLine("[TransactionHistory] Importing JSON");
         await AccountService.ImportTransactionAsync();
 
         await AccountService.EnsureLoadedAsync();

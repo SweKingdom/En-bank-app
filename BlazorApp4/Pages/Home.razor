@@ -4,11 +4,13 @@
 @inject NavigationManager Navigation
 @inject AppState AppState
 
-
-<h3>Välkommen till min bank app!</h3>
+<!-- Home page/login page -->
+<h3>Welcome to my bank app!</h3>
 <br/>
+
+<!-- Login field -->
 <div class="form-group" id="codeInputContainer" style="max-width: 200px;">
-    <label for="inputCode" class="form-label">Ange kod för att logga in:</label>
+    <label for="inputCode" class="form-label">Input pin code to log in:</label>
     <InputText id="inputCode"
                class="form-control"
                @bind-Value="userCode"
@@ -18,20 +20,26 @@
                @oninput="OnlyDigits" />
 </div>
 
+<!-- Login button -->
 @if (!string.IsNullOrEmpty(userCode) && IsDigitsOnly(userCode))
 {
-    <button class="btn btn-primary mt-2" @onclick="HandleLogin">Logga in</button>
+    <button class="btn btn-primary mt-2" @onclick="HandleLogin">Login</button>
 }
 
+<!-- Error message -->
 @if (!string.IsNullOrEmpty(message))
 {
     <div class="text-danger mt-2">@message</div>
 }
 
 @code {
+    //private fields
     private string userCode = string.Empty;
     private string message = string.Empty;
 
+    /// <summary>
+    /// Ensures that only digits are entered into the PIN field
+    /// </summary>
     private void OnlyDigits(ChangeEventArgs e)
     {
         var value = e.Value?.ToString() ?? string.Empty;
@@ -44,6 +52,9 @@
         userCode = sb.ToString();
     }
 
+    /// <summary>
+    /// Validates that the given string contains only digits.
+    /// </summary>
     private bool IsDigitsOnly(string str)
     {
         if (string.IsNullOrEmpty(str)) return false;
@@ -55,6 +66,10 @@
         return true;
     }
 
+    /// <summary>
+    /// Handles user login by validating the entered PIN code.
+    /// Redirects to the Create Account page if login succeeds.
+    /// </summary>
     private async Task HandleLogin()
     {
         message = string.Empty;
@@ -66,7 +81,7 @@
         }
         else
         {
-            message = "Fel kod. Försök igen.";
+            message = "Wrong code, try again.";
             userCode = string.Empty;
         }
     }
