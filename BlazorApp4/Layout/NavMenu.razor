@@ -40,8 +40,17 @@
 </div>
 
 @code {
+    // If NavMenu is collapsed or not
     private bool collapseNavMenu = true;
+
+    /// <summary>
+    /// Determines the CSS class used to toggle the menu's collapsed state
+    /// </summary>
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    /// <summary>
+    /// Toggles the visibility of the side navigation menu
+    /// </summary>
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
