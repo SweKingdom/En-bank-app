@@ -55,7 +55,7 @@ else
         <!-- Amount -->
         <div class="mb-3">
             <label class="form-label">Amount</label>
-            <InputNumber TValue="decimal" @bind-Value="_model.Amount" class="form-control" min="0.01" step="0.01" />
+            <InputNumber TValue="decimal" @bind-Value="_model.Amount" class="form-control" />
         </div>
 
         <!-- Submit button -->
@@ -104,7 +104,7 @@ else
                         <!-- Withdraw amount -->
                         <div class="mb-3">
                             <label class="form-label">Amount</label>
-                            <InputNumber TValue="decimal" @bind-Value="_withdrawModel.Amount" class="form-control" min="0.01" step="0.01" />
+                            <InputNumber TValue="decimal" @bind-Value="_withdrawModel.Amount" class="form-control" />
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Complete Withdrawal</button>
                     </EditForm>
@@ -141,7 +141,7 @@ else
                         <!-- Deposit amount -->
                         <div class="mb-3">
                             <label class="form-label">Amount</label>
-                            <InputNumber TValue="decimal" @bind-Value="_depositModel.Amount" class="form-control" min="0.01" step="0.01" />
+                            <InputNumber TValue="decimal" @bind-Value="_depositModel.Amount" class="form-control" />
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Complete Deposit</button>
                     </EditForm>
@@ -219,7 +219,7 @@ else
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
-        // Inloggningskontroll
+        // Loggin controll
         if (!AppState.IsLoggedIn)
         {
             Console.WriteLine("[NewTransaction] User not logged in — redirecting to /home.");
@@ -246,7 +246,9 @@ else
             return;
         }
         Console.WriteLine("[NewTransaction] Transfer initiated.");
-        if (_model.FromAccountId == Guid.Empty || _model.ToAccountId == Guid.Empty) //Checks if both account selcted are not the same
+        
+        //Checks if both account selcted are not the same
+        if (_model.FromAccountId == Guid.Empty || _model.ToAccountId == Guid.Empty) 
         {
             Console.WriteLine("[NewTransaction] Validation failed: Missing source or destination account.");
             StateHasChanged();
@@ -259,8 +261,12 @@ else
         try
         {
             Console.WriteLine($"[NewTransaction] Transferring {_model.Amount} from {_model.FromAccountId} → {_model.ToAccountId}");
-            await AccountService.Transfer(_model.FromAccountId, _model.ToAccountId, _model.Amount); //Perform transfer
-            _accounts = AccountService.GetAccounts();   //Updating list
+            
+            //Perform transfer
+            await AccountService.Transfer(_model.FromAccountId, _model.ToAccountId, _model.Amount); 
+            
+            //Updating list
+            _accounts = AccountService.GetAccounts();
 
             //Show confirmation
             var from = _accounts.First(x => x.Id == _model.FromAccountId);

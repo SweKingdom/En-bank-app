@@ -14,12 +14,20 @@
 
 <script>
     window.downloadFileFromContent = (fileName, content) => {
-        const blob = new Blob([content], { type: 'application/json' }); //Skapar en blob (En fil i mittet) frn JSOn texten
-        const link = document.createElement('a'); // Skapar temp download länk
+
+        //Creates a blob (a file in the middle) frm JSOn text
+        const blob = new Blob([content], { type: 'application/json' }); 
+
+        //Creates a temp download link
+        const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = fileName;
-        link.click(); // Webläsaren laddar ner filen
-        URL.revokeObjectURL(link.href); // Tar bort temp länken
+
+        //Webbrowser downloads file
+        link.click();
+
+        //Removes temp link
+        URL.revokeObjectURL(link.href);
     };
 </script>
 

@@ -101,7 +101,5 @@ namespace BlazorApp4.Services
         {
             return await _jsRuntime.InvokeAsync<string>("readFileContent");
         }
-
-
     }
 }

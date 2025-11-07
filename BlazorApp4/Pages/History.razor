@@ -74,7 +74,7 @@ else
 
 @if (_selectedAccount == null)
 {
-    <p> Choose Account a account to view transactions </p>
+    <p> Choose a Account to view transactions </p>
 }
 else
 {
@@ -118,10 +118,24 @@ else
             Import Transactions from JSON
         </button>
     }
+    @if (!string.IsNullOrEmpty(_importError))
+    {
+        <p class="text-danger">@_importError</p>
+    }
+    @if (!string.IsNullOrEmpty(_importSuccess))
+    {
+        <p class="text-success">@_importSuccess</p>
+    }
+
 }
 
 <!-- Code for design -->
 @code {
+    // Private variable instances
+    private string? _importError;
+    private string? _importSuccess;
+
+
     /// List and fields
     private List<BankAccount> _accounts = new();
     private BankAccount? _selectedAccount;
@@ -196,7 +210,7 @@ else
     }
 
     /// <summary>
-    /// Loads all accounts on component initialized and selects the first by default
+    /// Called automatically when the component is first initialized
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
@@ -210,7 +224,7 @@ else
         await AccountService.EnsureLoadedAsync();
         _accounts = AccountService.GetAccounts();
 
-        // If there is accounts in our lust, chose first to show in UI
+        // If there is accounts in our list, chose first to show in UI
         if (_accounts.Count > 0)
         {
             _selectedAccountId = _accounts[0].Id;
@@ -220,7 +234,10 @@ else
         AccountService.StateChanged += OnStateChanged;
         AccountService.AutoApplyDailyInterest();
     }
-
+    /// <summary>
+    /// triggers UI updates when the AccountService state changes
+    /// ensures the component re-renders when accounts updates
+    /// </summary>
     public void OnStateChanged()
     {
         _ = InvokeAsync(StateHasChanged);
@@ -286,13 +303,23 @@ else
     private async Task ImportTransactions()
     {
         Console.WriteLine("[TransactionHistory] Importing JSON");
-        await AccountService.ImportTransactionAsync();
+        _importError = null;
+        _importSuccess = null;
+
+        try
+        {
+            await AccountService.ImportTransactionAsync();
+            _importSuccess = "Import successful.";
+            Console.WriteLine("[TransactionHistory] Import completed successfully.");
+        }
+        catch (Exception ex)
+        {
+            _importError = ex.Message;
+            Console.WriteLine($"[TransactionHistory] Import failed: {ex.Message}");
+        }
 
         await AccountService.EnsureLoadedAsync();
         _accounts = AccountService.GetAccounts();
-        Console.WriteLine("[TransactionHistory] Import complete. Account list refreshed.");
         StateHasChanged();
     }
-
-
 }
