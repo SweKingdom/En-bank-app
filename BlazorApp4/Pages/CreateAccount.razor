@@ -94,7 +94,7 @@ else
         Console.WriteLine("[CreateAccount] Loading accounts...");
         await AccountService.EnsureLoadedAsync();
         _accounts = AccountService.GetAccounts();
-        Console.WriteLine($"[CreateAccount] Loaded {_accounts.Count} accounts");
+        
     }
 
     /// <summary>
