@@ -34,8 +34,10 @@
     /// <returns>A completed task.</returns> 
     private Task HandleLogout()
     {
+        Console.WriteLine("[MainLayout] Logout triggered");
         AppState.SetLoggedIn(false);
         Navigation.NavigateTo("/home", replace: true);
+        Console.WriteLine("[MainLayout] Navigation redirected to /home");
         return Task.CompletedTask;
     }
 }

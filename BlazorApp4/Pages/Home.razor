@@ -50,6 +50,7 @@
         }
 
         userCode = sb.ToString();
+        Console.WriteLine($"[Home] PIN input updated: {userCode.Length} digits entered.");
     }
 
     /// <summary>
@@ -72,14 +73,17 @@
     private async Task HandleLogin()
     {
         message = string.Empty;
+        Console.WriteLine($"[Home] Attempting login with PIN length: {userCode.Length}");
         var ok = await AccountService.ValidatePinAsync(userCode);
         if (ok)
         {
+            Console.WriteLine("[Home] Login successful. Redirecting to CreateAccount page");
             AppState.SetLoggedIn(true);
             Navigation.NavigateTo("/CreateAccount", forceLoad: false, replace: true);
         }
         else
         {
+            Console.WriteLine("[Home] Login failed: Invalid PIN entered.");
             message = "Wrong code, try again.";
             userCode = string.Empty;
         }

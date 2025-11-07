@@ -7,19 +7,32 @@ namespace BlazorApp4.Services
     /// Services responsible for managing bankaccount and transactions
     /// Handels storage, retrival and uppdates of account data
     /// </summary>
-    public class AccountService : IAccountService
+    public class AccountService : IAccountService, IDisposable
     {
         /// Private fields and lists
         private const string StorageKey = "BlazorApp4.accounts";
         private readonly List<BankAccount> _accounts = new();
         private readonly IStorageService _storageService;
         private bool isLoaded;
+        private bool isRunning;
         private const string CorrectPin = "1234";
+
+        public event Action? StateChanged;
+
+        /// <summary>
+        /// Triggers a manual state change notification.
+        /// </summary>
+        public void NotifyEvent()
+        {
+            StateChanged?.Invoke();
+            Console.WriteLine("[AccountService] State change event triggered.");
+        }
 
         /// Constructor
         public AccountService(IStorageService storageService)
         {
             _storageService = storageService;
+            Console.WriteLine("[AccountService] Initialized.");
         }
 
         /// <summary>
@@ -29,10 +42,10 @@ namespace BlazorApp4.Services
         {
             if (isLoaded)
             {
+                Console.WriteLine("[AccountService] Data already loaded; skipping reload.");
                 return;
             }
             await IsInitialized();
-            await AutoApplyDailyInterestAsync();
             isLoaded = true;
         }
 
@@ -44,6 +57,7 @@ namespace BlazorApp4.Services
             var fromStorage = await _storageService.GetItemAsync<List<BankAccount>>(StorageKey);
             if (fromStorage is { Count: > 0 })
                 _accounts.AddRange(fromStorage);
+            Console.WriteLine($"[AccountService] Retrieved {fromStorage.Count} accounts from storage.");
         }
 
         /// <summary>
@@ -102,6 +116,7 @@ namespace BlazorApp4.Services
                 _accounts.Remove(existing);
                 _accounts.Add(updatedAccount);
                 await SaveAsync();
+                Console.WriteLine($"[AccountService] Account '{updatedAccount.Name}' updated successfully.");
             }
         }
 
@@ -127,6 +142,7 @@ namespace BlazorApp4.Services
                 throw new ArgumentOutOfRangeException(nameof(amount), "Amount must be positive.");
             fromAccount.TransferTo(toAccount, amount);
             await SaveAsync();
+            Console.WriteLine($"[AccountService] Transfer complete");
         }
 
         /// <summary>
@@ -178,23 +194,39 @@ namespace BlazorApp4.Services
                 account.ApplyInterest();
             }
             await SaveAsync();
+            Console.WriteLine("[AccountService] Applyinterest Manualy");
         }
 
         /// <summary>
         /// Automatically applies daily interest if days have passed since last update
         /// </summary>
-        public async Task AutoApplyDailyInterestAsync()
+        public async Task ApplyDailyInterestAsync()
         {
             foreach (var account in _accounts.Where(a => a.AccountType == AccountType.Savings))
             {
                 Console.WriteLine($"Checks interest from {account}, days since last update: {(DateTime.Now - account.LastUpdated).Days}");
-                var daysElapsed = (DateTime.Now - account.LastUpdated).Days;
+                var daysElapsed = (DateTime.Now - account.LastUpdated).Seconds;
                 if (daysElapsed > 0)
                 {
                     account.ApplyInterest();
                 }
             }
             await SaveAsync();
+            NotifyEvent();
+            Console.WriteLine("[AccountService] ApplyDailyInterestAsync");
+        }
+
+        public void AutoApplyDailyInterest()
+        {
+            isRunning = true;
+            Task.Run(async () => {
+                while (isRunning == true)
+                {
+                    await Task.Delay(5000);
+                    await ApplyDailyInterestAsync();
+                    Console.WriteLine("[AccountService] Auto ApplyDailyInterestAsync check");
+                }
+            });
         }
 
         /// <summary>
@@ -303,6 +335,11 @@ namespace BlazorApp4.Services
             {
                 Console.WriteLine($"[AccountService] Error importing: {ex.Message}");
             }
+        }
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
         }
     }
 }

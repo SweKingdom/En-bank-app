@@ -154,11 +154,13 @@ else
         if (currentKey == sortKey)
         {
             descending = !descending;
+            Console.WriteLine($"[TransactionHistory] Sorting order toggled for {sortKey}. Descending = {descending}");
         }
         else
         {
             currentKey = sortKey;
             descending = true;
+            Console.WriteLine($"[TransactionHistory] Sorting changed to {sortKey} (Descending).");
         }
     }
 
@@ -172,6 +174,7 @@ else
         minAmount = null;
         maxAmount = null;
         selectedType = null;
+        Console.WriteLine("[TransactionHistory] Filters cleared.");
     }
 
     /// <summary>
@@ -187,6 +190,7 @@ else
                 return;
             _selectedAccountId = value;
             _selectedAccount = _accounts.FirstOrDefault(account => account.Id == value);
+            Console.WriteLine($"[TransactionHistory] Selected account changed to {_selectedAccount?.Name ?? "None"}.");
             StateHasChanged();
         }
     }
@@ -198,9 +202,11 @@ else
     {
         if (!AppState.IsLoggedIn)
         {
+            Console.WriteLine("[TransactionHistory] User not logged in. Redirecting to /home.");
             Navigation.NavigateTo("/home", replace: true);
             return;
         }
+        Console.WriteLine("[TransactionHistory] Loading accounts...");
         await AccountService.EnsureLoadedAsync();
         _accounts = AccountService.GetAccounts();
 
@@ -211,6 +217,13 @@ else
             _selectedAccount = _accounts[0];
         }
         StateHasChanged();
+        AccountService.StateChanged += OnStateChanged;
+        AccountService.AutoApplyDailyInterest();
+    }
+
+    public void OnStateChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
     }
 
     /// <summary>
@@ -251,6 +264,7 @@ else
                 ? filteredList.OrderByDescending(transaction => transaction.TimeStamp)
                 : filteredList.OrderBy(transaction => transaction.TimeStamp))
         };
+        Console.WriteLine("[TransactionHistory] Transactions filtered and sorted.");
         return filteredList;
     }
 
@@ -276,6 +290,7 @@ else
 
         await AccountService.EnsureLoadedAsync();
         _accounts = AccountService.GetAccounts();
+        Console.WriteLine("[TransactionHistory] Import complete. Account list refreshed.");
         StateHasChanged();
     }
 

@@ -23,7 +23,14 @@
         public void SetLoggedIn(bool value)
         {
             IsLoggedIn = value;
+            Console.WriteLine($"[AppState] Login state updated: {(IsLoggedIn ? "User logged in" : "User logged out")}.");
             NotifyStateChanged();
         }
-        private void NotifyStateChanged() => OnChange?.Invoke();    }
+        private void NotifyStateChanged()
+        {
+            Console.WriteLine("[AppState] Notifying subscribed components of state change.");
+            OnChange?.Invoke();
+        }
+    }
+
 }

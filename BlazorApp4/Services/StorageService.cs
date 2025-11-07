@@ -23,7 +23,11 @@ namespace BlazorApp4.Services
         /// Creates a new instance of the StorageService
         /// </summary>
         /// <param name="jsRuntime">JS runtime used for interacting with localStorage</param>
-        public StorageService(IJSRuntime jsRuntime) => _jsRuntime = jsRuntime;
+        public StorageService(IJSRuntime jsRuntime)
+        {
+            _jsRuntime = jsRuntime;
+            Console.WriteLine("[StorageService] Initialized.");
+        }
 
         /// <summary>
         /// Gets and deserializes a value from localStorage
@@ -33,6 +37,7 @@ namespace BlazorApp4.Services
         /// <returns>The deserialized object or default if not found</returns>
         public async Task<T> GetItemAsync<T>(string key)
         {
+            Console.WriteLine($"[StorageService] Attempting to retrieve item: '{key}' from localStorage");
             var json = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", key);
             if (string.IsNullOrEmpty(json))
             {
@@ -51,6 +56,7 @@ namespace BlazorApp4.Services
         {
             var json = JsonSerializer.Serialize(value, _jsonSerializerOptions);
             await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
+            Console.WriteLine($"[StorageService] Stored key '{key}' with serialized object ({typeof(T).Name}).");
 
         }
 
@@ -83,6 +89,7 @@ namespace BlazorApp4.Services
         /// <returns></returns>
         public async Task DownloadFileAsync(string fileName, string content)
         {
+            Console.WriteLine($"[StorageService] Initiating download: '{fileName}'");
             await _jsRuntime.InvokeVoidAsync("downloadFileFromContent", fileName, content);
         }
 
