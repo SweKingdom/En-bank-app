@@ -203,13 +203,15 @@ else
         // Inloggningskontroll
         if (!AppState.IsLoggedIn)
         {
+            Console.WriteLine("[NewTransaction] User not logged in — redirecting to /home.");
             Navigation.NavigateTo("/home", replace: true);
             return;
         }
-
+        Console.WriteLine("[NewTransaction] Loading accounts...");
         await AccountService.EnsureLoadedAsync();
         _accounts = AccountService.GetAccounts();
         _toAccounts = _accounts;
+        Console.WriteLine($"[NewTransaction] {_accounts.Count} accounts loaded.");
     }
 
     /// <summary>
@@ -218,16 +220,20 @@ else
     /// </summary>
     private async Task OnSubmitAsync()
     {
+        Console.WriteLine("[NewTransaction] Transfer initiated.");
         if (_model.FromAccountId == Guid.Empty || _model.ToAccountId == Guid.Empty) //Checks if both account selcted are not the same
         {
+            Console.WriteLine("[NewTransaction] Validation failed: Missing source or destination account.");
             StateHasChanged();
         }
         if (_model.FromAccountId == _model.ToAccountId)
         {
+            Console.WriteLine("[NewTransaction] Validation failed: Cannot transfer to the same account.");
             StateHasChanged();
         }
         try
         {
+            Console.WriteLine($"[NewTransaction] Transferring {_model.Amount} from {_model.FromAccountId} → {_model.ToAccountId}");
             await AccountService.Transfer(_model.FromAccountId, _model.ToAccountId, _model.Amount); //Perform transfer
             _accounts = AccountService.GetAccounts();   //Updating list
 
@@ -235,6 +241,7 @@ else
             var from = _accounts.First(x => x.Id == _model.FromAccountId);
             var to = _accounts.First(x => x.Id == _model.ToAccountId);
             _model.Amount = 0;
+            Console.WriteLine("[NewTransaction] Transfer successful. Account list refreshed.");
             StateHasChanged();
         }
         catch (Exception exception)
@@ -270,6 +277,7 @@ else
         else
         {
             _toAccounts = _accounts.ToList();
+            Console.WriteLine("[NewTransaction] No 'From' account selected. Reset 'To' list.");
         }
         _model.ToAccountId = Guid.Empty;
     }
@@ -281,9 +289,11 @@ else
     {
         try
         {
+            Console.WriteLine($"[NewTransaction] Withdrawal requested: {_withdrawModel.Amount} from {_withdrawModel.FromAccountId}");
             await AccountService.WithdrawAsync(_withdrawModel.FromAccountId, _withdrawModel.Amount);
             _accounts = AccountService.GetAccounts();
             _withdrawModel.Amount = 0;
+            Console.WriteLine("[NewTransaction] Withdrawal successful. Account list refreshed.");
             StateHasChanged();
         }
         catch (Exception ex)
@@ -299,9 +309,11 @@ else
     {
         try
         {
+            Console.WriteLine($"[NewTransaction] Deposit requested: {_depositModel.Amount} from {_depositModel.ToAccountId}");
             await AccountService.DepositAsync(_depositModel.ToAccountId, _depositModel.Amount);
             _accounts = AccountService.GetAccounts();
             _depositModel.Amount = 0;
+            Console.WriteLine("[NewTransaction] Deposit successful. Account list refreshed.");
             StateHasChanged();
         }
         catch (Exception ex)

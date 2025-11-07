@@ -29,6 +29,7 @@ namespace BlazorApp4.Domain
             Currency = currency;
             Balance = initialBalance;
             LastUpdated = lastUpdated ?? DateTime.Now;
+            Console.WriteLine($"[BankAccount] Created new account '{Name}' ({AccountType}) with balance {Balance} {Currency} at {LastUpdated}.");
         }
 
         [JsonConstructor]
@@ -42,6 +43,7 @@ namespace BlazorApp4.Domain
             LastUpdated = lastUpdated;
             if (transactions != null)
                 _transaction = transactions;
+            Console.WriteLine($"[BankAccount] Loaded existing account '{Name}' ({AccountType}) with balance {Balance} {Currency} at {LastUpdated}.");
         }
 
         /// <summary>
@@ -51,6 +53,8 @@ namespace BlazorApp4.Domain
         /// <param name="amount">The specified amount transfered</param>
         public void TransferTo(BankAccount toAccount, decimal amount)
         {
+            Console.WriteLine($"[TransferTo] Starting transfer of {amount} {Currency} from '{Name}' ({Id}) to '{toAccount.Name}' ({toAccount.Id}).");
+
             // From what account
             Balance -= amount;
             LastUpdated = DateTime.Now;
@@ -76,6 +80,7 @@ namespace BlazorApp4.Domain
                 ToAccountId = toAccount.Id,
                 TimeStamp = DateTime.Now
             });
+            Console.WriteLine($"[TransferTo] Transfer complete. '{Name}' new balance: {Balance}, '{toAccount.Name}' new balance: {toAccount.Balance}.");
         }
 
         /// <summary>
@@ -85,6 +90,7 @@ namespace BlazorApp4.Domain
         /// <exception cref="ArgumentException"></exception>
         public void Deposit(decimal amount)
         {
+            Console.WriteLine($"[Deposit] Attempting to deposit {amount} {Currency} into '{Name}'.");
             if (amount < 0) throw new ArgumentException("Amount must be greater then 0!");
             Balance += amount;
             LastUpdated = DateTime.Now;
@@ -94,6 +100,7 @@ namespace BlazorApp4.Domain
                 Amount = amount,
                 BalanceAfterTransaction = Balance
             });
+            Console.WriteLine($"[Deposit] Deposit successful. New balance: {Balance} {Currency}.");
         }
 
         /// <summary>
@@ -104,6 +111,7 @@ namespace BlazorApp4.Domain
         /// <exception cref="InvalidOperationException">Cant have a negative balance</exception>
         public void Withdraw(decimal amount)
         {
+            Console.WriteLine($"[Withdraw] Attempting to withdraw {amount} {Currency} from '{Name}'.");
             if (amount < 0) throw new ArgumentException("Amount must be greater then 0!");
             if (Balance < amount) throw new InvalidOperationException("Insuficent balance");
             Balance -= amount;
@@ -114,6 +122,7 @@ namespace BlazorApp4.Domain
                 Amount = amount,
                 BalanceAfterTransaction = Balance
             });
+            Console.WriteLine($"[Withdraw] Withdrawal successful. New balance: {Balance} {Currency}.");
         }
 
         /// <summary>
@@ -136,8 +145,7 @@ namespace BlazorApp4.Domain
                 BalanceAfterTransaction = Balance,
                 TimeStamp = DateTime.Now
             });
-
-
+            Console.WriteLine($"[ApplyInterest] Applied {interestAmount:F2} {Currency} interest to '{Name}' ({daysElapsed} days). New balance: {Balance}.");
         }
     }
 }

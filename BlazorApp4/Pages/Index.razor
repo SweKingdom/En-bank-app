@@ -12,6 +12,7 @@
     /// </summary>
     protected override void OnInitialized()
     {
+        Console.WriteLine("[Index] Component initialized — redirecting user to /home.");
         Navigation.NavigateTo("/home", replace: true);
     }
 }
