@@ -24,6 +24,8 @@ namespace BlazorApp4.Domain
         // Constructor
         public BankAccount(string name, AccountType accountType, Currency currency, decimal initialBalance, DateTime? lastUpdated = null)
         {
+            if (initialBalance < 0)
+                throw new ArgumentException("Initial balance cannot be less than 0!");
             Name = name;
             AccountType = accountType;
             Currency = currency;
@@ -53,6 +55,10 @@ namespace BlazorApp4.Domain
         /// <param name="amount">The specified amount transfered</param>
         public void TransferTo(BankAccount toAccount, decimal amount)
         {
+            if (amount <= 0)
+                throw new ArgumentException("Transfer amount must be greater than 0!");
+            if (Balance < amount)
+                throw new InvalidOperationException("Insufficient balance for transfer.");
             Console.WriteLine($"[TransferTo] Starting transfer of {amount} {Currency} from '{Name}' ({Id}) to '{toAccount.Name}' ({toAccount.Id}).");
 
             // From what account

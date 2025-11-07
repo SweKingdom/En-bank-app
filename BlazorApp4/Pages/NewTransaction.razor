@@ -63,6 +63,11 @@ else
             <button type="submit" class="btn btn-primary ">Complete Transaction</button>
         </div>
     </EditForm>
+    @if (!string.IsNullOrEmpty(_transferError))
+    {
+        <p class="text-danger">@_transferError</p>
+    }
+
 
     <!-- Withdraw and deposit -->
     <h3 class="mt-4 mb-3">Withdraw & Deposit</h3>
@@ -103,6 +108,10 @@ else
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Complete Withdrawal</button>
                     </EditForm>
+                    @if (!string.IsNullOrEmpty(_withdrawError))
+                    {
+                        <p class="text-danger">@_withdrawError</p>
+                    }
                 </div>
             </div>
 
@@ -136,6 +145,10 @@ else
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Complete Deposit</button>
                     </EditForm>
+                    @if (!string.IsNullOrEmpty(_depositError))
+                    {
+                        <p class="text-danger">@_depositError</p>
+                    }
                 </div>
             </div>
         </div>
@@ -160,6 +173,12 @@ else
 <!-- Coding stuff -->
 @code
 {
+    //Private instance variables
+    private string? _transferError;
+    private string? _withdrawError;
+    private string? _depositError;
+
+
     // Private lists and models
     private readonly TransferFormModel _model = new();
     private List<BankAccount> _accounts = new();
@@ -220,6 +239,12 @@ else
     /// </summary>
     private async Task OnSubmitAsync()
     {
+        _transferError = null;
+        if (_model.Amount <= 0)
+        {
+            _transferError = "Not allowed: Transfer amount must be greater than 0.";
+            return;
+        }
         Console.WriteLine("[NewTransaction] Transfer initiated.");
         if (_model.FromAccountId == Guid.Empty || _model.ToAccountId == Guid.Empty) //Checks if both account selcted are not the same
         {
@@ -244,9 +269,9 @@ else
             Console.WriteLine("[NewTransaction] Transfer successful. Account list refreshed.");
             StateHasChanged();
         }
-        catch (Exception exception)
+        catch (Exception ex)
         {
-            Console.WriteLine(exception.Message);
+            _transferError = $"Not allowed: {ex.Message}";
         }
     }
 
@@ -287,6 +312,12 @@ else
     /// </summary>
     private async Task OnWithdrawAsync()
     {
+        _withdrawError = null;
+        if (_withdrawModel.Amount <= 0)
+        {
+            _withdrawError = "Not allowed: Withdrawal amount must be greater than 0.";
+            return;
+        }
         try
         {
             Console.WriteLine($"[NewTransaction] Withdrawal requested: {_withdrawModel.Amount} from {_withdrawModel.FromAccountId}");
@@ -298,7 +329,7 @@ else
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            _withdrawError = $"Not allowed: {ex.Message}";
         }
     }
 
@@ -307,6 +338,12 @@ else
     /// </summary>
     private async Task OnDepositAsync()
     {
+        _depositError = null;
+        if (_depositModel.Amount <= 0)
+        {
+            _depositError = "Not allowed: Deposit amount must be greater than 0.";
+            return;
+        }
         try
         {
             Console.WriteLine($"[NewTransaction] Deposit requested: {_depositModel.Amount} from {_depositModel.ToAccountId}");
@@ -318,7 +355,7 @@ else
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            _depositError = $"Not allowed: {ex.Message}";
         }
     }
 }
