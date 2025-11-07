@@ -126,7 +126,6 @@ else
     {
         <p class="text-success">@_importSuccess</p>
     }
-
 }
 
 <!-- Code for design -->
@@ -271,7 +270,6 @@ else
         {
             filteredList = filteredList.Where(t => t.transactionType == parsedType);
         }
-
         filteredList = currentKey switch
         {
             SortKey.Amount => (descending
@@ -305,7 +303,6 @@ else
         Console.WriteLine("[TransactionHistory] Importing JSON");
         _importError = null;
         _importSuccess = null;
-
         try
         {
             await AccountService.ImportTransactionAsync();
@@ -317,7 +314,6 @@ else
             _importError = ex.Message;
             Console.WriteLine($"[TransactionHistory] Import failed: {ex.Message}");
         }
-
         await AccountService.EnsureLoadedAsync();
         _accounts = AccountService.GetAccounts();
         StateHasChanged();

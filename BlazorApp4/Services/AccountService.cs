@@ -302,15 +302,12 @@ namespace BlazorApp4.Services
         public async Task ImportTransactionAsync()
         {
             Console.WriteLine("[AccountService] Importing JSON");
-
             var json = await _storageService.ReadFileAsync();
             if (string.IsNullOrWhiteSpace(json))
                 throw new Exception("No file content found.");
-
             var importData = JsonSerializer.Deserialize<ImportedAccountData>(json);
             if (importData == null)
                 throw new Exception("Failed to read or parse file.");
-
             if (_accounts.Any(a => a.Id == importData.Id))
                 throw new Exception("Unable to import account — an account with this ID already exists.");
 
@@ -322,7 +319,6 @@ namespace BlazorApp4.Services
                 importData.Balance,
                 importData.LastUpdated
             );
-
             foreach (var t in importData.Transactions)
             {
                 newAccount.Transactions.Add(new Transaction
@@ -337,12 +333,10 @@ namespace BlazorApp4.Services
                     Currency = (Currency)t.Currency
                 });
             }
-
             _accounts.Add(newAccount);
             await SaveAsync();
             Console.WriteLine($"[AccountService] Imported account '{newAccount.Name}' with {newAccount.Transactions.Count} transactions.");
         }
-
 
         /// <summary>
         /// Stops any background tasks if necessary
