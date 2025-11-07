@@ -9,14 +9,13 @@ namespace BlazorApp4.Services
     /// </summary>
     public class AccountService : IAccountService, IDisposable
     {
-        /// Private fields and lists
+        /// Private  instance variables, fields and lists
         private const string StorageKey = "BlazorApp4.accounts";
         private readonly List<BankAccount> _accounts = new();
         private readonly IStorageService _storageService;
         private bool isLoaded;
         private bool isRunning;
         private const string CorrectPin = "1234";
-
         public event Action? StateChanged;
 
         /// <summary>
@@ -198,14 +197,15 @@ namespace BlazorApp4.Services
         }
 
         /// <summary>
-        /// Automatically applies daily interest if days have passed since last update
+        /// Iterates over all savings accounts and applies daily interest
+        /// if one or more days have passed since the last update
         /// </summary>
         public async Task ApplyDailyInterestAsync()
         {
             foreach (var account in _accounts.Where(a => a.AccountType == AccountType.Savings))
             {
                 Console.WriteLine($"Checks interest from {account}, days since last update: {(DateTime.Now - account.LastUpdated).Days}");
-                var daysElapsed = (DateTime.Now - account.LastUpdated).Seconds;
+                var daysElapsed = (DateTime.Now - account.LastUpdated).Days;
                 if (daysElapsed > 0)
                 {
                     account.ApplyInterest();
@@ -216,20 +216,23 @@ namespace BlazorApp4.Services
             Console.WriteLine("[AccountService] ApplyDailyInterestAsync");
         }
 
+        /// <summary>
+        /// Continuously checks and applies interest on a background loop.
+        /// Runs every 10 seconds as long as the service is active.
+        /// </summary>
         public void AutoApplyDailyInterest()
         {
             isRunning = true;
-            Task.Run(async () => {
+            Task.Run(async () =>
+            {
                 while (isRunning == true)
                 {
-                    await Task.Delay(5000);
+                    await Task.Delay(10000);
                     await ApplyDailyInterestAsync();
                     Console.WriteLine("[AccountService] Auto ApplyDailyInterestAsync check");
                 }
             });
         }
-
-
 
         /// <summary>
         /// Validates a user PIN asynchronously
@@ -251,7 +254,9 @@ namespace BlazorApp4.Services
                 Console.WriteLine($"[AccountService] Account {accountId} not found");
                 return;
             }
-            var exportData = new // Format på filen
+            
+            // Format on file
+            var exportData = new 
             {
                 account.Id,
                 account.Name,
@@ -270,11 +275,15 @@ namespace BlazorApp4.Services
                     t.Currency
                 })
             };
-            var json = JsonSerializer.Serialize(exportData, new JsonSerializerOptions// Converts C# obj -> JSON string
+            
+            // Converts C# obj -> JSON string
+            var json = JsonSerializer.Serialize(exportData, new JsonSerializerOptions
             {
                 WriteIndented = true
             });
-            await _storageService.DownloadFileAsync($"{account.Name}_transactions.json", json); // Downloading
+            
+            // Downloading
+            await _storageService.DownloadFileAsync($"{account.Name}_transactions.json", json); 
         }
 
         /// <summary>
@@ -292,53 +301,52 @@ namespace BlazorApp4.Services
         /// </summary>
         public async Task ImportTransactionAsync()
         {
-            try
+            Console.WriteLine("[AccountService] Importing JSON");
+
+            var json = await _storageService.ReadFileAsync();
+            if (string.IsNullOrWhiteSpace(json))
+                throw new Exception("No file content found.");
+
+            var importData = JsonSerializer.Deserialize<ImportedAccountData>(json);
+            if (importData == null)
+                throw new Exception("Failed to read or parse file.");
+
+            if (_accounts.Any(a => a.Id == importData.Id))
+                throw new Exception("Unable to import account — an account with this ID already exists.");
+
+            var newAccount = new BankAccount(
+                importData.Id == Guid.Empty ? Guid.NewGuid() : importData.Id,
+                importData.Name,
+                (AccountType)importData.AccountType,
+                (Currency)importData.Currency,
+                importData.Balance,
+                importData.LastUpdated
+            );
+
+            foreach (var t in importData.Transactions)
             {
-                Console.WriteLine("[AccountService] Importing JSON");
-                var json = await _storageService.ReadFileAsync(); // Reads file through StorageService
-                if (string.IsNullOrWhiteSpace(json))
+                newAccount.Transactions.Add(new Transaction
                 {
-                    Console.WriteLine("[AccountService] No file content read.");
-                    return;
-                }
-                var importData = JsonSerializer.Deserialize<ImportedAccountData>(json); // Deserialized JSON to C# obj
-                if (importData == null)
-                {
-                    Console.WriteLine("[AccountService] Failed to deserialize JSON.");
-                    return;
-                }
-                var newAccount = new BankAccount(
-                    importData.Id == Guid.Empty ? Guid.NewGuid() : importData.Id,
-                    importData.Name,
-                    (AccountType)importData.AccountType,
-                    (Currency)importData.Currency,
-                    importData.Balance,
-                    importData.LastUpdated
-                );
-                foreach (var t in importData.Transactions)
-                {
-                    newAccount.Transactions.Add(new Transaction
-                    {
-                        Id = t.Id,
-                        TimeStamp = t.TimeStamp,
-                        Amount = t.Amount,
-                        transactionType = (TransactionType)t.transactionType,
-                        BalanceAfterTransaction = t.BalanceAfterTransaction,
-                        FromAccountId = t.FromAccount,
-                        ToAccountId = t.ToAccount,
-                        Currency = (Currency)t.Currency
-                    });
-                }
-                _accounts.Add(newAccount);
-                await SaveAsync();
-                Console.WriteLine($"[AccountService] Imported account '{newAccount.Name}' with {newAccount.Transactions.Count} transactions.");
+                    Id = t.Id,
+                    TimeStamp = t.TimeStamp,
+                    Amount = t.Amount,
+                    transactionType = (TransactionType)t.transactionType,
+                    BalanceAfterTransaction = t.BalanceAfterTransaction,
+                    FromAccountId = t.FromAccount,
+                    ToAccountId = t.ToAccount,
+                    Currency = (Currency)t.Currency
+                });
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[AccountService] Error importing: {ex.Message}");
-            }
+
+            _accounts.Add(newAccount);
+            await SaveAsync();
+            Console.WriteLine($"[AccountService] Imported account '{newAccount.Name}' with {newAccount.Transactions.Count} transactions.");
         }
 
+
+        /// <summary>
+        /// Stops any background tasks if necessary
+        /// </summary>
         public void Dispose()
         {
             throw new NotImplementedException();

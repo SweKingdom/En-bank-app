@@ -83,8 +83,12 @@ else
 @code {
     /// Private fields and models
     private string? _errorMessage;
-    private CreateAccountModel _model = new(); // Holds form data for new account
-    private List<BankAccount> _accounts = new(); // List all excisting accounts
+    
+    // Holds form data for new account
+    private CreateAccountModel _model = new(); 
+
+    // List all excisting accounts
+    private List<BankAccount> _accounts = new(); 
 
     /// <summary>
     /// Ensures accounts are loaded from the service, called when component is initialized
@@ -146,13 +150,17 @@ else
     {
         bool confirm = await JS.InvokeAsync<bool>("confirm", $"Are you sure you want to remove this account?");
         if (!confirm)
+        {
             Console.WriteLine("[CreateAccount] Account deletion canceled by user");
             return;
+        }
         try
         {
             await AccountService.DeleteAccount(Id);
-            _accounts = AccountService.GetAccounts(); // Updating list
-            StateHasChanged(); // Updating UI
+
+            // Updating list
+            _accounts = AccountService.GetAccounts(); 
+            StateHasChanged();
         }
         catch (Exception ex)
         {
