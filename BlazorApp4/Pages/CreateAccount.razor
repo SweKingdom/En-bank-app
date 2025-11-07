@@ -46,6 +46,12 @@
     <button type="submit">Create</button>
 </EditForm>
 
+<!-- Error message -->
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <p class="text-danger">@_errorMessage</p>
+}
+
 <!-- Show accounts -->
 <h4>All accounts</h4>
 @if(_accounts.Count == 0)
@@ -76,6 +82,7 @@ else
 
 @code {
     /// Private fields and models
+    private string? _errorMessage;
     private CreateAccountModel _model = new(); // Holds form data for new account
     private List<BankAccount> _accounts = new(); // List all excisting accounts
 
@@ -103,9 +110,14 @@ else
     private async Task CreateAccountAsync()
     {
         Console.WriteLine($"[CreateAccount] Creating account '{_model.Name}'...");
+        _errorMessage = null;
         try
         {
-            Console.WriteLine(_model.Name);
+            if (_model.InitialBalance < 0)
+            {
+                _errorMessage = "Not allowed: Initial balance cannot be less than 0.";
+                return;
+            }
             await AccountService.CreateAccount(
                 _model.Name,
                 _model.AccountType,
@@ -121,8 +133,8 @@ else
         }
         catch (Exception exception)
         {
+            _errorMessage = $"Not allowed: {exception.Message}";
             Console.WriteLine(exception);
-            throw;
         }
     }
 
